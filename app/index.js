@@ -5,8 +5,7 @@ const fs = require('fs');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3000;
-const HOST = '0.0.0.0';
+const PORT = process.env.PORT || 3000;
 let previewCounter = 0;
 
 app.use(cors());
@@ -23,15 +22,13 @@ app.post('/preview', (req, res) => {
             console.error('Error writing preview file:', err);
             res.status(500).send({ error: 'Failed to generate preview' });
         } else {
-            res.send({ url: `http://${HOST}:${PORT}/${previewFilename}` });
+            res.send({ url: `${req.protocol}://${req.get('host')}/${previewFilename}` });
         }
     });
 });
 
 app.use(express.static(__dirname));
 
-app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000');
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
-
-module.exports = app;
