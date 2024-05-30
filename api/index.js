@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const cors = require('cors');
 
 const app = express();
@@ -13,21 +14,27 @@ app.use(bodyParser.json());
 
 app.post('/preview', (req, res) => {
     const content = req.body.content;
+    if (!content) {
+        return res.status(400).send({ error: 'Content is required' });
+    }
+
     previewCounter++;
     const previewFilename = `preview-${previewCounter}.html`;
-    const previewFilePath = path.join(__dirname, previewFilename);
+    const previewFilePath = path.join(os.tmpdir(), previewFilename);
 
     fs.writeFile(previewFilePath, content, (err) => {
         if (err) {
             console.error('Error writing preview file:', err);
-            res.status(500).send({ error: 'Failed to generate preview' });
+            return res.status(500).send({ error: 'Failed to generate preview' });
         } else {
-            res.send({ url: `${req.protocol}://${req.get('host')}/${previewFilename}` });
+            const previewUrl = `${req.protocol}://${req.get('host')}/preview/${previewFilename}`;
+            console.log(`Preview generated: ${previewUrl}`);
+            return res.send({ url: previewUrl });
         }
     });
 });
 
-app.use(express.static(__dirname));
+app.use('/preview', express.static(os.tmpdir()));
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
