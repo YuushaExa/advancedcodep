@@ -1,41 +1,37 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
-const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-let previewCounter = 0;
+const port = 3000;
 
-app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.post('/preview', (req, res) => {
-    const content = req.body.content;
-    if (!content) {
-        return res.status(400).send({ error: 'Content is required' });
-    }
-
-    previewCounter++;
-    const previewFilename = `preview-${previewCounter}.html`;
-    const previewFilePath = path.join(os.tmpdir(), previewFilename);
-
-    fs.writeFile(previewFilePath, content, (err) => {
-        if (err) {
-            console.error('Error writing preview file:', err);
-            return res.status(500).send({ error: 'Failed to generate preview' });
-        } else {
-            const previewUrl = `${req.protocol}://${req.get('host')}/preview/${previewFilename}`;
-            console.log(`Preview generated: ${previewUrl}`);
-            return res.send({ url: previewUrl });
-        }
-    });
+    const { html, css, js } = req.body;
+    const content = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Preview</title>
+            <style>${css}</style>
+        </head>
+        <body>
+            ${html}
+            <script>${js}</script>
+        </body>
+        </html>
+    `;
+    const filePath = path.join(__dirname, 'public', 'preview.html');
+    fs.writeFileSync(filePath, content, 'utf8');
+    res.send({ url: `http://localhost:${port}/preview.html` });
 });
 
-app.use('/preview', express.static(os.tmpdir()));
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`);
 });
