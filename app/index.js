@@ -28,8 +28,8 @@ app.post('/preview', (req, res) => {
 
 app.use(express.static(__dirname));
 
-app.listen(PORT, HOST, () => {
-    console.log(`Server is running on http://${HOST}:${PORT}`);
+app.listen(3000, () => {
+  console.log('Server is running on http://localhost:3000');
 });
 
 module.exports = app;
