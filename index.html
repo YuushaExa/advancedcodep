@@ -3,28 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Replit Clone</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Simple Replit Clone</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <h2>Files</h2>
+    <div id="app">
+        <div id="sidebar">
+            <button onclick="createFile()">New File</button>
             <ul id="file-list"></ul>
-            <input type="text" id="new-file-name" placeholder="New file name">
-            <button onclick="createFile()">Create File</button>
-            <input type="text" id="new-folder-name" placeholder="New folder name">
-            <button onclick="createFolder()">Create Folder</button>
         </div>
-        <div class="main">
-            <div class="editor">
-                <h2>Editor</h2>
-                <textarea id="editor" oninput="updateIframe()"></textarea>
-            </div>
-            <div class="output">
-                <h2>Webview</h2>
-                <iframe id="webview" srcdoc=""></iframe>
-            </div>
+        <div id="editor-container">
+            <textarea id="editor" oninput="updateContent()"></textarea>
+        </div>
+        <div id="output-container">
+            <iframe id="output"></iframe>
         </div>
     </div>
     <script src="script.js"></script>
