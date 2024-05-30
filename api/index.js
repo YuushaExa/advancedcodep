@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const app = express();
 const port = 3000;
@@ -21,13 +22,16 @@ app.post('/preview', (req, res) => {
         </head>
         <body>
             ${html}
-            <script>${js}</script>
+            <script>${js}<\/script>
         </body>
         </html>
     `;
     const filePath = path.join(__dirname, 'public', 'preview.html');
     fs.writeFileSync(filePath, content, 'utf8');
-    res.send({ url: `http://localhost:${port}/preview.html` });
+    const networkInterfaces = os.networkInterfaces();
+    const addresses = Object.values(networkInterfaces).flat().filter(details => details.family === 'IPv4' && !details.internal);
+    const ip = addresses.length ? addresses[0].address : 'localhost';
+    res.send({ url: `http://${ip}:${port}/preview.html` });
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
