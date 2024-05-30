@@ -3,21 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Room</title>
+    <title>Replit Clone</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="sidebar">
-        <h2>Files</h2>
-        <!-- File list here -->
+    <div class="container">
+        <div class="sidebar">
+            <h2>Files</h2>
+            <ul id="file-list"></ul>
+            <input type="text" id="new-file-name" placeholder="New file name">
+            <button onclick="createFile()">Create File</button>
+            <input type="text" id="new-folder-name" placeholder="New folder name">
+            <button onclick="createFolder()">Create Folder</button>
+        </div>
+        <div class="main">
+            <div class="editor">
+                <h2>Editor</h2>
+                <textarea id="editor" oninput="updateIframe()"></textarea>
+            </div>
+            <div class="output">
+                <h2>Webview</h2>
+                <iframe id="webview" srcdoc=""></iframe>
+            </div>
+        </div>
     </div>
-    <div class="editor">
-        <h2>Editor</h2>
-        <!-- Code editor here -->
-    </div>
-    <div class="console">
-        <h2>Console</h2>
-        <!-- Console output here -->
-    </div>
+    <script src="script.js"></script>
 </body>
 </html>
