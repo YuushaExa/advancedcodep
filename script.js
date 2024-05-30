@@ -1,47 +1,55 @@
+// script.js
 let files = {};
+let currentFile = null;
 
 function createFile() {
-    const fileName = document.getElementById('new-file-name').value;
+    const fileName = prompt("Enter file name:");
     if (fileName) {
-        files[fileName] = '';
-        displayFiles();
-        document.getElementById('new-file-name').value = '';
+        files[fileName] = "";
+        currentFile = fileName;
+        updateFileList();
+        updateEditor();
     }
 }
 
-function createFolder() {
-    const folderName = document.getElementById('new-folder-name').value;
-    if (folderName) {
-        files[folderName] = {};
-        displayFiles();
-        document.getElementById('new-folder-name').value = '';
-    }
-}
-
-function displayFiles() {
-    const fileList = document.getElementById('file-list');
-    fileList.innerHTML = '';
+function updateFileList() {
+    const fileList = document.getElementById("file-list");
+    fileList.innerHTML = "";
     for (let file in files) {
-        const li = document.createElement('li');
+        const li = document.createElement("li");
         li.textContent = file;
-        li.onclick = () => openFile(file);
+        li.onclick = () => selectFile(file);
         fileList.appendChild(li);
     }
 }
 
-function openFile(fileName) {
-    const editor = document.getElementById('editor');
-    editor.value = files[fileName];
-    editor.oninput = () => {
-        files[fileName] = editor.value;
-        updateIframe();
-    };
-    updateIframe();
+function selectFile(file) {
+    currentFile = file;
+    updateEditor();
 }
 
-function updateIframe() {
-    const iframe = document.getElementById('webview');
-    iframe.srcdoc = document.getElementById('editor').value;
+function updateEditor() {
+    const editor = document.getElementById("editor");
+    if (currentFile) {
+        editor.value = files[currentFile];
+    }
 }
 
-document.addEventListener('DOMContentLoaded', displayFiles);
+function updateContent() {
+    const editor = document.getElementById("editor");
+    if (currentFile) {
+        files[currentFile] = editor.value;
+    }
+    updateOutput();
+}
+
+function updateOutput() {
+    const output = document.getElementById("output").contentWindow.document;
+    output.open();
+    output.write(files[currentFile] || "");
+    output.close();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    createFile();
+});
