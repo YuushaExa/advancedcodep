@@ -1,10 +1,13 @@
 body {
-    display: flex;
     margin: 0;
-    height: 100vh;
     font-family: Arial, sans-serif;
     background-color: #1e1e1e;
     color: #c5c5c5;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
 }
 
 .sidebar {
@@ -12,21 +15,62 @@ body {
     background-color: #252526;
     padding: 10px;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h2 {
+    color: #c5c5c5;
+    font-size: 1.2em;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar li {
+    padding: 5px 0;
+    cursor: pointer;
+}
+
+.sidebar input, .sidebar button {
+    margin: 5px 0;
+    padding: 5px;
+    width: 100%;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    width: 80%;
 }
 
 .editor {
-    width: 60%;
+    flex: 1;
     padding: 10px;
-    box-sizing: border-box;
+    background-color: #1e1e1e;
 }
 
-.console {
-    width: 20%;
-    background-color: #252526;
-    padding: 10px;
-    box-sizing: border-box;
+.editor textarea {
+    width: 100%;
+    height: 100%;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    border: none;
+    resize: none;
+    font-family: Consolas, 'Courier New', monospace;
 }
 
-h2 {
-    margin-top: 0;
+.output {
+    flex: 1;
+    padding: 10px;
+    background-color: #1e1e1e;
+}
+
+.output iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: #ffffff;
 }
