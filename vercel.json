@@ -11,7 +11,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://yuushaexa.github.io/"
+          "value": "https://yuushaexa.github.io/codep/"
         },
         {
           "key": "Access-Control-Allow-Methods",
