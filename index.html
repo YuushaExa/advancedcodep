@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
-	<head>
-		<meta charset="utf-8">
-		<title>Code Sandbox</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-		<style>
-		        body {
+<head>
+    <meta charset="utf-8">
+    <title>Code Sandbox</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -16,16 +14,28 @@
             font-family: Arial, sans-serif;
             background-color: #f5f5f5;
         }
-        #editor {
+        #container {
             display: flex;
             width: 100%;
             max-width: 1200px;
-            margin-bottom: 20px;
+        }
+        #file-tree {
+            width: 25%;
+            max-width: 200px;
+            background-color: #fff;
+            border-right: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        #editor {
+            flex-grow: 1;
+            padding: 10px;
+            box-sizing: border-box;
         }
         textarea {
-            width: 33%;
+            width: 100%;
             height: 300px;
-            margin: 5px;
+            margin-bottom: 20px;
             padding: 10px;
             box-sizing: border-box;
             font-family: monospace;
@@ -39,70 +49,114 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
-		</style>
-	</head>
+        .file-item {
+            cursor: pointer;
+            padding: 5px;
+            margin: 2px 0;
+            border-radius: 3px;
+        }
+        .file-item:hover {
+            background-color: #eee;
+        }
+        .file-item.active {
+            background-color: #ddd;
+        }
+        .add-file {
+            margin-top: 10px;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Code Sandbox</h1>
+    <div id="container">
+        <div id="file-tree">
+            <div class="file-item" data-file="index.html">index.html</div>
+            <div class="file-item" data-file="style.css">style.css</div>
+            <div class="file-item" data-file="script.js">script.js</div>
+            <div class="add-file">Add New File</div>
+        </div>
+        <div id="editor">
+            <textarea id="file-content" placeholder="File content"></textarea>
+        </div>
+    </div>
+    <iframe id="result"></iframe>
 
-	<body>
+    <script>
+        let files = {
+            'index.html': '',
+            'style.css': '',
+            'script.js': ''
+        };
+        let activeFile = 'index.html';
+        const fileContent = document.querySelector('#file-content');
+        const result = document.querySelector('#result');
 
-		<h1>Code Sandbox</h1>
-<div id="editor">
-    <textarea id="html" placeholder="HTML"></textarea>
-        <textarea id="css" placeholder="CSS/SCSS"></textarea>
-        <textarea id="js" placeholder="JavaScript"></textarea>
-</div>
-		<iframe id="result"></iframe>
+        // Load initial content
+        fileContent.value = files[activeFile];
 
-		<script>
-			// Get elements
-			let html = document.querySelector('#html');
-			let css = document.querySelector('#css');
-			let js = document.querySelector('#js');
-			let result = document.querySelector('#result');
+        // Function to update the iframe
+        function updateIframe() {
+            let page = `
+                <!doctype html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>${files['style.css']}</style>
+                </head>
+                <body>
+                    ${files['index.html']}
+                    <script type="module">${files['script.js']}</script>
+                </body>
+                </html>`;
+            const blob = new Blob([page], {type: "text/html"});
+            const url = URL.createObjectURL(blob);
+            result.src = url;
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
 
-			// Store debounce timer
-			let debounce;
+        // Update iframe initially
+        updateIframe();
 
-			/**
-			 * Update the iframe
-			 */
-		function updateIframe () {
+        // Handle input events
+        fileContent.addEventListener('input', () => {
+            files[activeFile] = fileContent.value;
+            updateIframe();
+        });
 
-		// Create new iframe
-		let clone = result.cloneNode();
-		result.replaceWith(clone);
-		result = clone;
+        // Handle file selection
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                activeFile = item.dataset.file;
+                fileContent.value = files[activeFile];
+            });
+        });
 
-		// Render
-                let page = [`<!doctype html><html><head><meta charset="utf-8"><style>${css.value}<\/style></head><body>${html.value}<script type="module">${js.value}<\/script></body></html>`];
-                const blob = new Blob(page,{type:"text/html"});
-                let burl = URL.createObjectURL(blob);
-                result.setAttribute("src",burl);
-                setTimeout(URL.revokeObjectURL,100,burl);
-	}
-
-			/**
-			 * Handle input events on our fields
-			 * @param  {Event}  event The event object
-			 */
-			function inputHandler (event) {
-
-				// Only run on our three fields
-				if (
-					event.target !== html &&
-					event.target !== css &&
-					event.target !== js
-				) return;
-
-				// Debounce the rendering for performance reasons
-				clearTimeout(debounce);
-
-				// Set update to happen when typing stops
-				debounce = setTimeout(updateIframe, 500);
-
-			}
-
-			// Listen for input events
-			document.addEventListener('input', inputHandler);
-		</script>
-	</body>
+        // Handle new file creation
+        document.querySelector('.add-file').addEventListener('click', () => {
+            const fileName = prompt('Enter new file name:');
+            if (fileName && !files[fileName]) {
+                files[fileName] = '';
+                const newFileItem = document.createElement('div');
+                newFileItem.classList.add('file-item');
+                newFileItem.dataset.file = fileName;
+                newFileItem.textContent = fileName;
+                newFileItem.addEventListener('click', (e) => {
+                    document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                    newFileItem.classList.add('active');
+                    activeFile = newFileItem.dataset.file;
+                    fileContent.value = files[activeFile];
+                });
+                document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
+            }
+        });
+    </script>
+</body>
 </html>
