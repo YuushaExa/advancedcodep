@@ -89,7 +89,7 @@
 
     <script>
         let files = {
-            'index.html': '<!doctype html><html><head><meta charset="utf-8"><!-- CSS_PLACEHOLDER --></head><body><!-- HTML_PLACEHOLDER --><script type="module"><!-- JS_PLACEHOLDER --><\/script></body></html>',
+            'index.html': '',
             'style.css': '',
             'script.js': ''
         };
@@ -103,15 +103,33 @@
         // Function to update the iframe
         function updateIframe() {
             let htmlContent = files['index.html'];
-            let cssContent = files['style.css'];
-            let jsContent = files['script.js'];
 
-            // Replace placeholders in index.html content
-            let page = htmlContent
-                .replace('<!-- CSS_PLACEHOLDER -->', `<style>${cssContent}</style>`)
-                .replace('<!-- HTML_PLACEHOLDER -->', files['index.html'])
-                .replace('<!-- JS_PLACEHOLDER -->', jsContent);
+            // Create a temporary element to parse the HTML
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
 
+            // Inject CSS content
+            tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                let href = link.getAttribute('href');
+                if (files[href]) {
+                    let style = document.createElement('style');
+                    style.textContent = files[href];
+                    link.replaceWith(style);
+                }
+            });
+
+            // Inject JS content
+            tempDiv.querySelectorAll('script[src]').forEach(script => {
+                let src = script.getAttribute('src');
+                if (files[src]) {
+                    let inlineScript = document.createElement('script');
+                    inlineScript.textContent = files[src];
+                    script.replaceWith(inlineScript);
+                }
+            });
+
+            // Create the HTML page
+            let page = tempDiv.innerHTML;
             const blob = new Blob([page], {type: "text/html"});
             const url = URL.createObjectURL(blob);
             result.src = url;
