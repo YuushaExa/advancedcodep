@@ -1,108 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Code Sandbox</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<head>
-		<meta charset="utf-8">
-		<title>Code Sandbox</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                display: flex;
+                flex-direction: row;
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                background-color: #f5f5f5;
+            }
 
-		<style>
-		        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
-        #editor {
-            display: flex;
-            width: 100%;
-            max-width: 1200px;
-            margin-bottom: 20px;
-        }
-        textarea {
-            width: 33%;
-            height: 300px;
-            margin: 5px;
-            padding: 10px;
-            box-sizing: border-box;
-            font-family: monospace;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            resize: none;
-        }
-        iframe {
-            width: 100%;
-            height: 500px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-        }
-		</style>
-	</head>
+            #file-tree {
+                width: 200px;
+                background-color: #fff;
+                border-right: 1px solid #ccc;
+                padding: 20px;
+            }
 
-	<body>
+            #code-editor {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin: 0;
+                padding: 0;
+            }
 
-		<h1>Code Sandbox</h1>
-<div id="editor">
-    <textarea id="html" placeholder="HTML"></textarea>
-        <textarea id="css" placeholder="CSS/SCSS"></textarea>
-        <textarea id="js" placeholder="JavaScript"></textarea>
-</div>
-		<iframe id="result"></iframe>
+            #editor {
+                display: flex;
+                width: 100%;
+                max-width: 1200px;
+                margin-bottom: 20px;
+            }
 
-		<script>
-			// Get elements
-			let html = document.querySelector('#html');
-			let css = document.querySelector('#css');
-			let js = document.querySelector('#js');
-			let result = document.querySelector('#result');
+            textarea {
+                width: 33%;
+                height: 300px;
+                margin: 5px;
+                padding: 10px;
+                box-sizing: border-box;
+                font-family: monospace;
+                border: 1px solid #ccc;
+                background-color: #fff;
+                resize: none;
+            }
 
-			// Store debounce timer
-			let debounce;
+            iframe {
+                width: 100%;
+                height: 500px;
+                border: 1px solid #ccc;
+                background-color: #fff;
+            }
+        </style>
+    </head>
 
-			/**
-			 * Update the iframe
-			 */
-		function updateIframe () {
+    <body>
+        <div id="file-tree">
+            <ul>
+                <li>
+                    index.html
+                </li>
+                <li>
+                    style.css
+                </li>
+                <li>
+                    script.js
+                </li>
+                <li>
+                    <button id="add-file">Add File</button>
+                </li>
+            </ul>
+        </div>
 
-		// Create new iframe
-		let clone = result.cloneNode();
-		result.replaceWith(clone);
-		result = clone;
+        <div id="code-editor">
+            <h1>Code Sandbox</h1>
+            <div id="editor">
+                <textarea id="html" placeholder="HTML"></textarea>
+                <textarea id="css" placeholder="CSS/SCSS"></textarea>
+                <textarea id="js" placeholder="JavaScript"></textarea>
+            </div>
+            <iframe id="result"></iframe>
+        </div>
 
-		// Render
+        <script>
+            // Get elements
+            let html = document.querySelector('#html');
+            let css = document.querySelector('#css');
+            let js = document.querySelector('#js');
+            let result = document.querySelector('#result');
+            let addFileButton = document.querySelector('#add-file');
+            let fileList = document.querySelector('#file-tree ul');
+
+            // Store debounce timer
+            let debounce;
+
+            /**
+             * Update the iframe
+             */
+            function updateIframe() {
+                // Create new iframe
+                let clone = result.cloneNode();
+                result.replaceWith(clone);
+                result = clone;
+
+                // Render
                 let page = [`<!doctype html><html><head><meta charset="utf-8"><style>${css.value}<\/style></head><body>${html.value}<script type="module">${js.value}<\/script></body></html>`];
-                const blob = new Blob(page,{type:"text/html"});
+                const blob = new Blob(page, { type: "text/html" });
                 let burl = URL.createObjectURL(blob);
-                result.setAttribute("src",burl);
-                setTimeout(URL.revokeObjectURL,100,burl);
-	}
+                result.setAttribute("src", burl);
+                setTimeout(URL.revokeObjectURL, 100, burl);
+            }
 
-			/**
-			 * Handle input events on our fields
-			 * @param  {Event}  event The event object
-			 */
-			function inputHandler (event) {
+            /**
+             * Handle input events on our fields
+             * @param  {Event}  event The event object
+             */
+            function inputHandler(event) {
+                // Only run on our three fields
+                if (
+                    event.target !== html &&
+                    event.target !== css &&
+                    event.target !== js
+                ) return;
 
-				// Only run on our three fields
-				if (
-					event.target !== html &&
-					event.target !== css &&
-					event.target !== js
-				) return;
+                // Debounce the rendering for performance reasons
+                clearTimeout(debounce);
 
-				// Debounce the rendering for performance reasons
-				clearTimeout(debounce);
+                // Set update to happen when typing stops
+                debounce = setTimeout(updateIframe, 500);
+            }
 
-				// Set update to happen when typing stops
-				debounce = setTimeout(updateIframe, 500);
+            /**
+             * Handle click event on add file button
+             */
+            function addFileHandler() {
+                let fileName = prompt("Enter file name:");
+                if (fileName) {
+                    let listItem = document.createElement('li');
+                    listItem.textContent = fileName;
+                    fileList.insertBefore(listItem, addFileButton.parentNode);
+                }
+            }
 
-			}
+            /**
+             * Handle click event on file tree items
+             * @param  {Event}  event The event object
+             */
+            function fileItemClickHandler(event) {
+                if (event.target.tagName === 'LI') {
+                    // Get the file name from the clicked list item
+                    let fileName = event.target.textContent;
 
-			// Listen for input events
-			document.addEventListener('input', inputHandler);
-		</script>
-	</body>
+                    // Fetch the file content (assuming it's stored in a server or a file system)
+                    // You can replace this with your own implementation tofetch the file content
+                    fetchFileContent(fileName)
+                        .then((content) => {
+                            // Update the code editor with the file content
+                            updateCodeEditor(fileName, content);
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                }
+            }
+
+            /**
+             * Fetch file content
+             * @param  {string}  fileName The name of the file
+             * @returns {Promise} A promise that resolves to the file content
+             */
+            function fetchFileContent(fileName) {
+                // Simulating file fetching with a delay
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        // Assuming the content is retrieved successfully
+                        // Replace this part with your own implementation to fetch the file content
+                        let content = localStorage.getItem(fileName);
+                        if (content) {
+                            resolve(content);
+                        } else {
+                            reject(new Error('File not found'));
+                        }
+                    }, 500);
+                });
+            }
+
+            /**
+             * Update the code editor with file content
+             * @param  {string}  fileName The name of the file
+             * @param  {string}  content The content of the file
+             */
+            function updateCodeEditor(fileName, content) {
+                switch (getFileExtension(fileName)) {
+                    case 'html':
+                        html.value = content;
+                        break;
+                    case 'css':
+                        css.value = content;
+                        break;
+                    case 'js':
+                        js.value = content;
+                        break;
+                    default:
+                        console.warn('Unsupported file type');
+                }
+            }
+
+            /**
+             * Extract file extension from a file name
+             * @param  {string}  fileName The name of the file
+             * @returns {string} The file extension
+             */
+            function getFileExtension(fileName) {
+                return fileName.split('.').pop().toLowerCase();
+            }
+
+            // Listen for input events on our fields
+            html.addEventListener('input', inputHandler);
+            css.addEventListener('input', inputHandler);
+            js.addEventListener('input', inputHandler);
+
+            // Listen for click event on add file button
+            addFileButton.addEventListener('click', addFileHandler);
+
+            // Listen for click event on file tree items
+            fileList.addEventListener('click', fileItemClickHandler);
+        </script>
+    </body>
 </html>
