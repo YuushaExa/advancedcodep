@@ -1,196 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSFiddle Clone</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
-        #editor {
-            display: flex;
-            width: 100%;
-            max-width: 1200px;
-            margin-bottom: 20px;
-        }
-        textarea {
-            width: 33%;
-            height: 300px;
-            margin: 5px;
-            padding: 10px;
-            box-sizing: border-box;
-            font-family: monospace;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            resize: none;
-        }
-        iframe {
-            width: 100%;
-            height: 500px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-        }
-        #controls {
-            margin-bottom: 20px;
-        }
-        #controls label, #controls select, #controls button {
-            font-size: 16px;
-            margin: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div id="controls">
-        <label for="js-preprocessor">JavaScript Preprocessor:</label>
-        <select id="js-preprocessor">
-            <option value="none">None</option>
-            <option value="typescript">TypeScript</option>
-        </select>
-        <label for="css-preprocessor">CSS Preprocessor:</label>
-        <select id="css-preprocessor">
-            <option value="none">None</option>
-            <option value="scss">SCSS</option>
-        </select>
-        <button id="preview-button">Preview</button>
-    </div>
-    <div id="editor">
-        <textarea id="html" placeholder="HTML"></textarea>
-        <textarea id="css" placeholder="CSS/SCSS"></textarea>
-        <textarea id="js" placeholder="JavaScript"></textarea>
-    </div>
-    <iframe id="preview" name="preview" sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation allow-downloads allow-presentation" allow="accelerometer *; bluetooth *; camera *; encrypted-media *; display-capture *; geolocation *; gyroscope *; microphone *; midi *; clipboard-read *; clipboard-write *; web-share *; serial *; xr-spatial-tracking *" scrolling="auto" allowtransparency="true" allowpaymentrequest="true" allowfullscreen="true" class="result-iframe" loading="lazy"></iframe>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const htmlEditor = document.getElementById('html');
-            const cssEditor = document.getElementById('css');
-            const jsEditor = document.getElementById('js');
-            const jsPreprocessor = document.getElementById('js-preprocessor');
-            const cssPreprocessor = document.getElementById('css-preprocessor');
-            const previewFrame = document.getElementById('preview');
-            const previewButton = document.getElementById('preview-button');
 
-            let typeScriptLoaded = false;
-            let scssLoaded = false;
+	<head>
+		<meta charset="utf-8">
+		<title>Code Sandbox</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-            function loadScript(src, callback) {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = callback;
-                document.head.appendChild(script);
-            }
+		<style>
+			body {
+				margin: 1em auto;
+				max-width: 40em;
+				width: 88%;
+			}
 
-            function loadTypeScript() {
-                if (!typeScriptLoaded) {
-                    loadScript("https://cdnjs.cloudflare.com/ajax/libs/typescript/4.5.5/typescript.min.js", () => {
-                        typeScriptLoaded = true;
-                        updatePreview();
-                    });
-                }
-            }
+			label,
+			textarea,
+			iframe {
+				display: block;
+				width: 100%;
+			}
 
-            function loadSCSS() {
-                if (!scssLoaded) {
-                    loadScript("https://cdnjs.cloudflare.com/ajax/libs/sass.js/0.11.1/sass.sync.min.js", () => {
-                        scssLoaded = true;
-                        updatePreview();
-                    });
-                }
-            }
+			textarea {
+				margin-bottom: 1.5em;
+				min-height: 8em;
+			}
+		</style>
+	</head>
 
-            function getTranspiledJs(jsCode) {
-                if (jsPreprocessor.value === 'typescript') {
-                    if (!typeScriptLoaded) {
-                        loadTypeScript();
-                        return '';
-                    }
-                    try {
-                        return ts.transpile(jsCode);
-                    } catch (e) {
-                        console.error('TypeScript transpilation error:', e);
-                        return `console.error('TypeScript transpilation error:', ${JSON.stringify(e.message)});`;
-                    }
-                }
-                return jsCode;
-            }
+	<body>
 
-            function getTranspiledCss(cssCode) {
-                if (cssPreprocessor.value === 'scss') {
-                    if (!scssLoaded) {
-                        loadSCSS();
-                        return '';
-                    }
-                    return new Promise((resolve, reject) => {
-                        Sass.compile(cssCode, (result) => {
-                            if (result.status === 0) {
-                                resolve(result.text);
-                            } else {
-                                console.error('SCSS transpilation error:', result.formatted);
-                                resolve(`/* SCSS transpilation error: ${result.formatted} */`);
-                            }
-                        });
-                    });
-                }
-                return Promise.resolve(cssCode);
-            }
+		<h1>Code Sandbox</h1>
 
-            async function generatePreviewContent() {
-                const html = htmlEditor.value;
-                const css = await getTranspiledCss(cssEditor.value);
-                const jsContent = getTranspiledJs(jsEditor.value);
-                return `
-                    <!DOCTYPE html>
-                    <html lang="en">
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>Preview</title>
-                        <style>${css}</style>
-                    </head>
-                    <body>
-                        ${html}
-                        <script>${jsContent}\<\/script>
-                    </body>
-                    </html>
-                `;
-            }
+		<label for="html">HTML</label>
+		<textarea id="html" spellcheck="false" autocorrect="off" autocapitalize="off" translate="no"></textarea>
 
-            async function updateIframe() {
-                const content = await generatePreviewContent();
-                const blob = new Blob([content], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
+		<label for="css">CSS</label>
+		<textarea id="css" spellcheck="false" autocorrect="off" autocapitalize="off" translate="no"></textarea>
 
-                const clone = previewFrame.cloneNode();
-                previewFrame.replaceWith(clone);
-                previewFrame.src = url;
+		<label for="js">JavaScript</label>
+		<textarea id="js" spellcheck="false" autocorrect="off" autocapitalize="off" translate="no"></textarea>
 
-                setTimeout(() => URL.revokeObjectURL(url), 100);
-            }
+		<p><strong>Result</strong></p>
+		<iframe id="result"></iframe>
 
-            async function openPreviewInNewTab() {
-                const content = await generatePreviewContent();
-                const newWindow = window.open();
-                newWindow.document.open();
-                newWindow.document.write(content);
-                newWindow.document.close();
-            }
+		<script>
+			// Get elements
+			let html = document.querySelector('#html');
+			let css = document.querySelector('#css');
+			let js = document.querySelector('#js');
+			let result = document.querySelector('#result');
 
-            [htmlEditor, cssEditor, jsEditor, jsPreprocessor, cssPreprocessor].forEach(element => {
-                element.addEventListener('input', updateIframe);
-                element.addEventListener('change', updateIframe);
-            });
+			// Store debounce timer
+			let debounce;
 
-            previewButton.addEventListener('click', openPreviewInNewTab);
+			/**
+			 * Update the iframe
+			 */
+		function updateIframe () {
 
-            // Initial call to display content on page load
-            updateIframe();
-        });
-    </script>
-</body>
+		// Create new iframe
+		let clone = result.cloneNode();
+		result.replaceWith(clone);
+		result = clone;
+
+		// Render
+                let page = [`<!doctype html><html><head><meta charset="utf-8"><style>${css.value}<\/style></head><body>${html.value}<script type="module">${js.value}<\/script></body></html>`];
+                const blob = new Blob(page,{type:"text/html"});
+                let burl = URL.createObjectURL(blob);
+                result.setAttribute("src",burl);
+                setTimeout(URL.revokeObjectURL,100,burl);
+	}
+
+			/**
+			 * Handle input events on our fields
+			 * @param  {Event}  event The event object
+			 */
+			function inputHandler (event) {
+
+				// Only run on our three fields
+				if (
+					event.target !== html &&
+					event.target !== css &&
+					event.target !== js
+				) return;
+
+				// Debounce the rendering for performance reasons
+				clearTimeout(debounce);
+
+				// Set update to happen when typing stops
+				debounce = setTimeout(updateIframe, 500);
+
+			}
+
+			// Listen for input events
+			document.addEventListener('input', inputHandler);
+		</script>
+	</body>
 </html>
