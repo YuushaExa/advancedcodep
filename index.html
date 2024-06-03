@@ -89,7 +89,7 @@
 
     <script>
         let files = {
-            'index.html': '',
+            'index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><!-- HTML_PLACEHOLDER --><script type="module" src="script.js"></script></body></html>',
             'style.css': '',
             'script.js': ''
         };
@@ -101,8 +101,8 @@
         fileContent.value = files[activeFile];
 
         // Function to update the iframe
-        function updateIframe() {
-            let htmlContent = files['index.html'];
+        function updateIframe(url = 'index.html') {
+            let htmlContent = files[url];
 
             // Create a temporary element to parse the HTML
             let tempDiv = document.createElement('div');
@@ -131,9 +131,23 @@
             // Create the HTML page
             let page = tempDiv.innerHTML;
             const blob = new Blob([page], {type: "text/html"});
-            const url = URL.createObjectURL(blob);
-            result.src = url;
-            setTimeout(() => URL.revokeObjectURL(url), 100);
+            const newUrl = URL.createObjectURL(blob);
+            result.src = newUrl;
+            result.onload = () => interceptLinks(result.contentWindow.document);
+            setTimeout(() => URL.revokeObjectURL(newUrl), 100);
+        }
+
+        // Intercept link clicks in the iframe
+        function interceptLinks(doc) {
+            doc.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const href = link.getAttribute('href');
+                    if (files[href]) {
+                        updateIframe(href);
+                    }
+                });
+            });
         }
 
         // Update iframe initially
@@ -142,7 +156,7 @@
         // Handle input events
         fileContent.addEventListener('input', () => {
             files[activeFile] = fileContent.value;
-            updateIframe();
+            updateIframe(activeFile);
         });
 
         // Handle file selection
