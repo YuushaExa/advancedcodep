@@ -146,7 +146,14 @@
         });
 
         // Handle file selection
-
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                activeFile = item.dataset.file;
+                fileContent.value = files[activeFile];
+            });
+        });
 
         // Handle new file creation
         document.querySelector('.add-file').addEventListener('click', () => {
