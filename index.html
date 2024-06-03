@@ -89,7 +89,7 @@
 
     <script>
         let files = {
-            'index.html': '',
+            'index.html': '<!doctype html><html><head><meta charset="utf-8"><!-- CSS_PLACEHOLDER --></head><body><!-- HTML_PLACEHOLDER --><script type="module"><!-- JS_PLACEHOLDER --><\/script></body></html>',
             'style.css': '',
             'script.js': ''
         };
@@ -102,18 +102,16 @@
 
         // Function to update the iframe
         function updateIframe() {
-            let page = `
-                <!doctype html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <style>${files['style.css']}</style>
-                </head>
-                <body>
-                    ${files['index.html']}
-                    <script type="module">${files['script.js']}<\/script>
-                </body>
-                </html>`;
+            let htmlContent = files['index.html'];
+            let cssContent = files['style.css'];
+            let jsContent = files['script.js'];
+
+            // Replace placeholders in index.html content
+            let page = htmlContent
+                .replace('<!-- CSS_PLACEHOLDER -->', `<style>${cssContent}</style>`)
+                .replace('<!-- HTML_PLACEHOLDER -->', files['index.html'])
+                .replace('<!-- JS_PLACEHOLDER -->', jsContent);
+
             const blob = new Blob([page], {type: "text/html"});
             const url = URL.createObjectURL(blob);
             result.src = url;
