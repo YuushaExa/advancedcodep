@@ -88,120 +88,105 @@
     <iframe id="result"></iframe>
 
     <script>
-let files = {
-    'index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><!-- HTML_PLACEHOLDER --><script type="module" src="script.js"></\script></body></html>',
-    'style.css': '',
-    'script.js': ''
-};
-let activeFile = 'index.html';
-const fileContent = document.querySelector('#file-content');
-const result = document.querySelector('#result');
+        let files = {
+            'index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><!-- HTML_PLACEHOLDER --><script type="module" src="script.js"></\script></body></html>',
+            'style.css': '',
+            'script.js': ''
+        };
+        let activeFile = 'index.html';
+        const fileContent = document.querySelector('#file-content');
+        const result = document.querySelector('#result');
 
-// Load initial content
-fileContent.value = files[activeFile];
-
-let blobUrl = null;
-
-// Function to update the iframe
-function updateIframe(url = 'index.html') {
-    let htmlContent = files[url];
-
-    // Create a temporary element to parse the HTML
-    let tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-
-    // Inject CSS content
-    tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-        let href = link.getAttribute('href');
-        if (files[href]) {
-            let style = document.createElement('style');
-            style.textContent = files[href];
-            link.replaceWith(style);
-        }
-    });
-
-    // Inject JS content
-    tempDiv.querySelectorAll('script[src]').forEach(script => {
-        let src = script.getAttribute('src');
-        if (files[src]) {
-            let inlineScript = document.createElement('script');
-            inlineScript.textContent = files[src];
-            script.replaceWith(inlineScript);
-        }
-    });
-
-    // Create the HTML page
-    let page = tempDiv.innerHTML;
-    const blob = new Blob([page], {type: "text/html"});
-    const newUrl = URL.createObjectURL(blob);
-    if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
-    }
-    blobUrl = newUrl;
-    result.src = newUrl;
-    result.onload = () => interceptLinks(result.contentWindow.document);
-}
-
-// Intercept link clicks in the iframe
-function interceptLinks(doc) {
-    doc.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', (event) => {
-            event.preventDefault();
-            const href = link.getAttribute('href');
-            if (files[href]) {
-                updateIframe(href);
-            }
-        });
-    });
-}
-
-// Update iframe initially
-updateIframe();
-
-// Debounce function to limit the rate of function calls
-function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-}
-
-// Handle input events
-fileContent.addEventListener('input', debounce(() => {
-    files[activeFile] = fileContent.value;
-    updateIframe(activeFile);
-}, 0));
-
-// Handle file selection
-document.querySelectorAll('.file-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-        document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        activeFile = item.dataset.file;
+        // Load initial content
         fileContent.value = files[activeFile];
-    });
-});
 
-// Handle new file creation
-document.querySelector('.add-file').addEventListener('click', () => {
-    const fileName = prompt('Enter new file name:');
-    if (fileName && !files[fileName]) {
-        files[fileName] = '';
-        const newFileItem = document.createElement('div');
-        newFileItem.classList.add('file-item');
-        newFileItem.dataset.file = fileName;
-        newFileItem.textContent = fileName;
-        newFileItem.addEventListener('click', (e) => {
-            document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-            newFileItem.classList.add('active');
-            activeFile = newFileItem.dataset.file;
-            fileContent.value = files[activeFile];
+        // Function to update the iframe
+        function updateIframe(url = 'index.html') {
+            let htmlContent = files[url];
+
+            // Create a temporary element to parse the HTML
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+
+            // Inject CSS content
+            tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                let href = link.getAttribute('href');
+                if (files[href]) {
+                    let style = document.createElement('style');
+                    style.textContent = files[href];
+                    link.replaceWith(style);
+                }
+            });
+
+            // Inject JS content
+            tempDiv.querySelectorAll('script[src]').forEach(script => {
+                let src = script.getAttribute('src');
+                if (files[src]) {
+                    let inlineScript = document.createElement('script');
+                    inlineScript.textContent = files[src];
+                    script.replaceWith(inlineScript);
+                }
+            });
+
+            // Create the HTML page
+            let page = tempDiv.innerHTML;
+            const blob = new Blob([page], {type: "text/html"});
+            const newUrl = URL.createObjectURL(blob);
+            result.src = newUrl;
+            result.onload = () => interceptLinks(result.contentWindow.document);
+            setTimeout(() => URL.revokeObjectURL(newUrl), 0);
+        }
+
+        // Intercept link clicks in the iframe
+        function interceptLinks(doc) {
+            doc.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const href = link.getAttribute('href');
+                    if (files[href]) {
+                        updateIframe(href);
+                    }
+                });
+            });
+        }
+
+        // Update iframe initially
+        updateIframe();
+
+        // Handle input events
+        fileContent.addEventListener('input', () => {
+            files[activeFile] = fileContent.value;
+            updateIframe(activeFile);
         });
-        document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
-    }
-});
 
+        // Handle file selection
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                activeFile = item.dataset.file;
+                fileContent.value = files[activeFile];
+            });
+        });
+
+        // Handle new file creation
+        document.querySelector('.add-file').addEventListener('click', () => {
+            const fileName = prompt('Enter new file name:');
+            if (fileName && !files[fileName]) {
+                files[fileName] = '';
+                const newFileItem = document.createElement('div');
+                newFileItem.classList.add('file-item');
+                newFileItem.dataset.file = fileName;
+                newFileItem.textContent = fileName;
+                newFileItem.addEventListener('click', (e) => {
+                    document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                    newFileItem.classList.add('active');
+                    activeFile = newFileItem.dataset.file;
+                    fileContent.value = files[activeFile];
+                });
+                document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
+            }
+        }); 
     </script>
 </body>
 </html>
