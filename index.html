@@ -100,14 +100,13 @@
         // Load initial content
         fileContent.value = files[activeFile];
 
-        let iframeBlob = null;
         // Function to update the iframe
-     function updateIframe(url = 'index.html') {
-  let htmlContent = files[url];
+        function updateIframe(url = 'index.html') {
+            let htmlContent = files[url];
 
-  // Create a temporary element to parse the HTML
-  let tempDiv = document.createElement('div');
-  tempDiv.innerHTML = htmlContent;
+            // Create a temporary element to parse the HTML
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
 
             // Inject CSS content
             tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
@@ -130,14 +129,12 @@
             });
 
             // Create the HTML page
-let page = tempDiv.innerHTML;
-  if (iframeBlob) {
-    iframeBlob.close();
-    URL.revokeObjectURL(result.src);
-  }
-  iframeBlob = new Blob([page], { type: "text/html" });
-  result.src = URL.createObjectURL(iframeBlob);
-  result.onload = () => interceptLinks(result.contentWindow.document);
+            let page = tempDiv.innerHTML;
+            const blob = new Blob([page], {type: "text/html"});
+            const newUrl = URL.createObjectURL(blob);
+            result.src = newUrl;
+            result.onload = () => interceptLinks(result.contentWindow.document);
+            setTimeout(() => URL.revokeObjectURL(newUrl), 5000);
         }
 
         // Intercept link clicks in the iframe
