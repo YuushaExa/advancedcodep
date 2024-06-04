@@ -134,7 +134,7 @@
             const newUrl = URL.createObjectURL(blob);
             result.src = newUrl;
             result.onload = () => interceptLinks(result.contentWindow.document);
-            setTimeout(() => URL.revokeObjectURL(newUrl), 5000);
+            setTimeout(() => URL.revokeObjectURL(newUrl), 0);
         }
 
         // Intercept link clicks in the iframe
