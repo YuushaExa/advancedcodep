@@ -110,7 +110,7 @@
         // Load initial content
         fileContent.value = files[activeFile];
 
-        // Function to update the iframe
+        // Function to update the iframe seamlessly
         function updateIframe(url = 'index.html') {
             let htmlContent = files[url];
 
@@ -140,11 +140,13 @@
 
             // Create the HTML page
             let page = tempDiv.innerHTML;
-            const blob = new Blob([page], {type: "text/html"});
-            const newUrl = URL.createObjectURL(blob);
-            result.src = newUrl;
-            result.onload = () => interceptLinks(result.contentWindow.document);
-            setTimeout(() => URL.revokeObjectURL(newUrl), 0);
+
+            // Seamlessly update iframe content
+            let iframeDoc = result.contentDocument || result.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(page);
+            iframeDoc.close();
+            interceptLinks(iframeDoc);
         }
 
         // Intercept link clicks in the iframe
