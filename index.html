@@ -79,6 +79,11 @@
         .folder .file-item {
             margin-left: 5px;
         }
+        .folder .folder-item {
+            display: flex;
+            align-items: center;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -111,7 +116,7 @@
         fileContent.value = files[activeFile];
 
         // Function to update the iframe seamlessly
-        function updateIframe(url = 'index.html') {
+        function updateIframe(url =             'index.html') {
             let htmlContent = files[url];
 
             // Create a temporary element to parse the HTML
@@ -214,11 +219,12 @@
             if (folderName) {
                 const newFolder = document.createElement('div');
                 newFolder.classList.add('folder');
-                newFolder.innerHTML = `<div class="folder-item">${folderName}</div>`;
+                newFolder.innerHTML = `<div class="folder-item" draggable="true">${folderName}</div>`;
                 newFolder.querySelector('.folder-item').addEventListener('click', () => {
                     newFolder.classList.toggle('expanded');
                 });
                 document.querySelector('#file-tree').insertBefore(newFolder, document.querySelector('.add-file'));
+
                 newFolder.addEventListener('dragover', (e) => {
                     e.preventDefault();
                 });
@@ -238,6 +244,10 @@
                         activeFile = newFilePath;
                         fileContent.value = files[activeFile];
                     }
+                });
+
+                newFolder.querySelector('.folder-item').addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', folderName);
                 });
             }
         });
@@ -287,6 +297,10 @@
                     activeFile = newFilePath;
                     fileContent.value = files[activeFile];
                 }
+            });
+
+            folder.querySelector('.folder-item').addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', folder.querySelector('.folder-item').textContent);
             });
         });
     </script>
