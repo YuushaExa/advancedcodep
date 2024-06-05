@@ -77,7 +77,7 @@
             padding-left: 10px;
         }
         .folder .file-item {
-            margin-left: 5px;
+            margin-left: 15px;
         }
     </style>
 </head>
@@ -96,184 +96,134 @@
         </div>
     </div>
     <iframe id="result"></iframe>
+<script>
+    let files = {
+        'index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><!-- HTML_PLACEHOLDER --><script type="module" src="script.js"></\script></body></html>',
+        'style.css': '',
+        'script.js': ''
+    };
+    let activeFile = 'index.html';
+    const fileContent = document.querySelector('#file-content');
+    const result = document.querySelector('#result');
 
-    <script>
-        let files = {
-            'index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><!-- HTML_PLACEHOLDER --><script type="module" src="script.js"></\script></body></html>',
-            'style.css': '',
-            'script.js': ''
-        };
-        let activeFile = 'index.html';
-        const fileContent = document.querySelector('#file-content');
-        const result = document.querySelector('#result');
+    // Load initial content
+    fileContent.value = files[activeFile];
 
-        // Load initial content
-        fileContent.value = files[activeFile];
+    // Function to update the iframe seamlessly
+    function updateIframe(url = 'index.html') {
+        let htmlContent = files[url];
 
-        // Function to update the iframe seamlessly
-        function updateIframe(url = 'index.html') {
-            let htmlContent = files[url];
+        // Create a temporary element to parse the HTML
+        let tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
 
-            // Create a temporary element to parse the HTML
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
+        // Inject CSS content
+        tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+            let href = link.getAttribute('href');
+            if (files[href]) {
+                let style = document.createElement('style');
+                style.textContent = files[href];
+                link.replaceWith(style);
+            }
+        });
 
-            // Inject CSS content
-            tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-                let href = link.getAttribute('href');
+        // Inject JS content
+        tempDiv.querySelectorAll('script[src]').forEach(script => {
+            let src = script.getAttribute('src');
+            if (files[src]) {
+                let inlineScript = document.createElement('script');
+                inlineScript.textContent = files[src];
+                script.replaceWith(inlineScript);
+            }
+        });
+
+        // Create the HTML page
+        let page = tempDiv.innerHTML;
+
+        // Seamlessly update iframe content
+        let iframeDoc = result.contentDocument || result.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(page);
+        iframeDoc.close();
+        interceptLinks(iframeDoc);
+    }
+
+    // Intercept link clicks in the iframe
+    function interceptLinks(doc) {
+        doc.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const href = link.getAttribute('href');
                 if (files[href]) {
-                    let style = document.createElement('style');
-                    style.textContent = files[href];
-                    link.replaceWith(style);
+                    updateIframe(href);
                 }
             });
+        });
+    }
 
-            // Inject JS content
-            tempDiv.querySelectorAll('script[src]').forEach(script => {
-                let src = script.getAttribute('src');
-                if (files[src]) {
-                    let inlineScript = document.createElement('script');
-                    inlineScript.textContent = files[src];
-                    script.replaceWith(inlineScript);
-                }
+    // Update iframe initially
+    updateIframe();
+
+    // Handle input events
+    fileContent.addEventListener('input', () => {
+        files[activeFile] = fileContent.value;
+        updateIframe(activeFile);
+    });
+
+    // Handle file selection
+    function selectFile(item) {
+        document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        activeFile = item.dataset.file;
+        fileContent.value = files[activeFile];
+    }
+
+    document.querySelectorAll('.file-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            selectFile(item);
+        });
+        item.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', item.dataset.file);
+        });
+    });
+
+    // Handle new file creation
+    document.querySelector('.add-file').addEventListener('click', () => {
+        const fileName = prompt('Enter new file name:');
+        if (fileName && !files[fileName]) {
+            files[fileName] = '';
+            const newFileItem = document.createElement('div');
+            newFileItem.classList.add('file-item');
+            newFileItem.dataset.file = fileName;
+            newFileItem.textContent = fileName;
+            newFileItem.draggable = true;
+            newFileItem.addEventListener('click', (e) => {
+                selectFile(newFileItem);
             });
-
-            // Create the HTML page
-            let page = tempDiv.innerHTML;
-
-            // Seamlessly update iframe content
-            let iframeDoc = result.contentDocument || result.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write(page);
-            iframeDoc.close();
-            interceptLinks(iframeDoc);
+            newFileItem.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', newFileItem.dataset.file);
+            });
+            document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
         }
+    });
 
-        // Intercept link clicks in the iframe
-        function interceptLinks(doc) {
-            doc.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    const href = link.getAttribute('href');
-                    if (files[href]) {
-                        updateIframe(href);
-                    }
-                });
+    // Handle new folder creation
+    document.querySelector('.add-folder').addEventListener('click', () => {
+        const folderName = prompt('Enter new folder name:');
+        if (folderName) {
+            const newFolder = document.createElement('div');
+            newFolder.classList.add('folder');
+            newFolder.innerHTML = `<div class="folder-item" draggable="true">${folderName}</div>`;
+            newFolder.querySelector('.folder-item').addEventListener('click', () => {
+                newFolder.classList.toggle('expanded');
             });
-        }
-
-        // Update iframe initially
-        updateIframe();
-
-        // Handle input events
-        fileContent.addEventListener('input', () => {
-            files[activeFile] = fileContent.value;
-            updateIframe(activeFile);
-        });
-
-        // Handle file selection
-        function selectFile(item) {
-            document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            activeFile = item.dataset.file;
-            fileContent.value = files[activeFile];
-        }
-
-        document.querySelectorAll('.file-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                selectFile(item);
-            });
-            item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', item.dataset.file);
-            });
-        });
-
-        // Handle new file creation
-        document.querySelector('.add-file').addEventListener('click', () => {
-            const fileName = prompt('Enter new file name:');
-            if (fileName && !files[fileName]) {
-                files[fileName] = '';
-                const newFileItem = document.createElement('div');
-                newFileItem.classList.add('file-item');
-                newFileItem.dataset.file = fileName;
-                newFileItem.textContent = fileName;
-                newFileItem.draggable = true;
-                newFileItem.addEventListener('click', (e) => {
-                    selectFile(newFileItem);
-                });
-                newFileItem.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', newFileItem.dataset.file);
-                });
-                document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
-            }
-        });
-
-        // Handle new folder creation
-        document.querySelector('.add-folder').addEventListener('click', () => {
-            const folderName = prompt('Enter new folder name:');
-            if (folderName) {
-                const newFolder = document.createElement('div');
-                newFolder.classList.add('folder');
-                newFolder.innerHTML = `<div class="folder-item">${folderName}</div>`;
-                newFolder.querySelector('.folder-item').addEventListener('click', () => {
-                    newFolder.classList.toggle('expanded');
-                });
-                document.querySelector('#file-tree').insertBefore(newFolder, document.querySelector('.add-file'));
-                newFolder.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                });
-                newFolder.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.getData('text/plain');
-                    const fileName = file.split('/').pop();
-                    const newFilePath = `${folderName}/${fileName}`;
-                    files[newFilePath] = files[file];
-                    delete files[file];
-                    const fileItem = document.querySelector(`[data-file="${file}"]`);
-                    fileItem.dataset.file = newFilePath;
-                    fileItem.textContent = fileName;
-                    fileItem.style.marginLeft = '5px';
-                    newFolder.appendChild(fileItem);
-                    if (activeFile === file) {
-                        activeFile = newFilePath;
-                        fileContent.value = files[activeFile];
-                    }
-                });
-            }
-        });
-
-        // Allow dragging files out of folders
-        document.querySelector('#file-tree').addEventListener('dragover', (e) => {
-            e.preventDefault();
-        });
-        document.querySelector('#file-tree').addEventListener('drop', (e) => {
-            e.preventDefault();
-            const file = e.dataTransfer.getData('text/plain');
-            const fileName = file.split('/').pop();
-            if (file.includes('/')) {
-                files[fileName] = files[file];
-                delete files[file];
-                const fileItem = document.querySelector(`[data-file="${file}"]`);
-                fileItem.dataset.file = fileName;
-                fileItem.textContent = fileName;
-                fileItem.style.marginLeft = '0';
-                document.querySelector('#file-tree').insertBefore(fileItem, document.querySelector('.add-file'));
-                if (activeFile === file) {
-                    activeFile = fileName;
-                    fileContent.value = files[activeFile];
-                }
-            }
-        });
-
-        // Initial folder event listeners
-        document.querySelectorAll('.folder').forEach(folder => {
-            folder.addEventListener('dragover', (e) => {
+            document.querySelector('#file-tree').insertBefore(newFolder, document.querySelector('.add-file'));
+            newFolder.addEventListener('dragover', (e) => {
                 e.preventDefault();
             });
-            folder.addEventListener('drop', (e) => {
+            newFolder.addEventListener('drop', (e) => {
                 e.preventDefault();
                 const file = e.dataTransfer.getData('text/plain');
-                const folderName = folder.querySelector('.folder-item').textContent;
                 const fileName = file.split('/').pop();
                 const newFilePath = `${folderName}/${fileName}`;
                 files[newFilePath] = files[file];
@@ -281,14 +231,64 @@
                 const fileItem = document.querySelector(`[data-file="${file}"]`);
                 fileItem.dataset.file = newFilePath;
                 fileItem.textContent = fileName;
-                fileItem.style.marginLeft = '5px';
-                folder.appendChild(fileItem);
+                fileItem.style.marginLeft = '15px';
+                newFolder.appendChild(fileItem);
                 if (activeFile === file) {
                     activeFile = newFilePath;
                     fileContent.value = files[activeFile];
                 }
             });
+        }
+    });
+
+    // Allow dragging files and folders out of folders
+    document.querySelector('#file-tree').addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+    document.querySelector('#file-tree').addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.getData('text/plain');
+        const fileName = file.split('/').pop();
+        if (file.includes('/')) {
+            files[fileName] = files[file];
+            delete files[file];
+            const fileItem = document.querySelector(`[data-file="${file}"]`);
+            fileItem.dataset.file = fileName;
+            fileItem.textContent = fileName;
+            fileItem.style.marginLeft = '0';
+            document.querySelector('#file-tree').insertBefore(fileItem, document.querySelector('.add-file'));
+            if (activeFile === file) {
+                activeFile = fileName;
+                fileContent.value = files[activeFile];
+            }
+        }
+    });
+
+    // Initial folder event listeners
+    document.querySelectorAll('.folder').forEach(folder => {
+        folder.addEventListener('dragover', (e) => {
+            e.preventDefault();
         });
-    </script>
+        folder.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.getData('text/plain');
+            const folderName = folder.querySelector('.folder-item').textContent;
+            const fileName = file.split('/').pop();
+            const newFilePath = `${folderName}/${fileName}`;
+            files[newFilePath] = files[file];
+            delete files[file];
+            const fileItem = document.querySelector(`[data-file="${file}"]`);
+            fileItem.dataset.file = newFilePath;
+            fileItem.textContent = fileName;
+            fileItem.style.marginLeft = '15px';
+            folder.appendChild(fileItem);
+            if (activeFile === file) {
+                activeFile = newFilePath;
+                fileContent.value = files[activeFile];
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
