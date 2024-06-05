@@ -139,7 +139,7 @@
             // Create the HTML page
             let page = tempDiv.innerHTML;
             const blob = new Blob([page], {type: "text/html"});
-            const newUrl = URL.createObject("URL.createObjectURL(blob)");
+            const newUrl = URL.createObjectURL(blob);
 
             // Update the iframe source
             result.src = newUrl;
