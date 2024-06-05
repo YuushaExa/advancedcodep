@@ -61,6 +61,12 @@
         .file-item.active {
             background-color: #ddd;
         }
+        .folder-item {
+            padding-left: 5px;
+        }
+        .folder-item .file-item {
+            padding-left: 10px;
+        }
         .add-file {
             margin-top: 10px;
             padding: 5px;
@@ -76,9 +82,11 @@
     <h1>Code Sandbox</h1>
     <div id="container">
         <div id="file-tree">
-            <div class="file-item" data-file="index.html">index.html</div>
-            <div class="file-item" data-file="style.css">style.css</div>
-            <div class="file-item" data-file="script.js">script.js</div>
+            <div class="folder-item">
+                <div class="file-item" data-file="index.html">index.html</div>
+                <div class="file-item" data-file="style.css">style.css</div>
+                <div class="file-item" data-file="script.js">script.js</div>
+            </div>
             <div class="add-file">Add New File</div>
         </div>
         <div id="editor">
@@ -131,62 +139,55 @@
             // Create the HTML page
             let page = tempDiv.innerHTML;
             const blob = new Blob([page], {type: "text/html"});
-            const newUrl = URL.createObjectURL(blob);
+            const newUrl = URL.createObject("URL.createObjectURL(blob)");
+
+            // Update the iframe source
             result.src = newUrl;
-            result.onload = () => interceptLinks(result.contentWindow.document);
-            setTimeout(() => URL.revokeObjectURL(newUrl), 0);
         }
 
-        // Intercept link clicks in the iframe
-        function interceptLinks(doc) {
-            doc.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    const href = link.getAttribute('href');
-                    if (files[href]) {
-                        updateIframe(href);
-                    }
+        // Function to handle file clicks
+        function handleFileClick(event) {
+            const clickedFile = event.target.getAttribute('data-file');
+            if (clickedFile) {
+                activeFile = clickedFile;
+                fileContent.value = files[activeFile];
+                document.querySelectorAll('.file-item').forEach(item => {
+                    item.classList.remove('active');
                 });
-            });
+                event.target.classList.add('active');
+            }
         }
 
-        // Update iframe initially
-        updateIframe();
+        // Function to add a new file
+        function addNewFile() {
+            const newFileName = prompt("Enter the name of the new file:");
+            if (newFileName && !files[newFileName]) {
+                files[newFileName] = '';
+                const newFileItem = document.createElement('div');
+                newFileItem.classList.add('file-item');
+                newFileItem.setAttribute('data-file', newFileName);
+                newFileItem.textContent = newFileName;
+                newFileItem.addEventListener('click', handleFileClick);
+                document.querySelector('.folder-item').appendChild(newFileItem);
+            }
+        }
 
-        // Handle input events
-        fileContent.addEventListener('input', () => {
-            files[activeFile] = fileContent.value;
+        // Attach event listeners
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', handleFileClick);
+        });
+
+        document.querySelector('.add-file').addEventListener('click', addNewFile);
+
+        // Update the file content whenever it changes
+        fileContent.addEventListener('input', function() {
+            files[activeFile] = this.value;
             updateIframe(activeFile);
         });
 
-        // Handle file selection
-        document.querySelectorAll('.file-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                activeFile = item.dataset.file;
-                fileContent.value = files[activeFile];
-            });
-        });
+        // Update the iframe initially
+        updateIframe();
 
-        // Handle new file creation
-        document.querySelector('.add-file').addEventListener('click', () => {
-            const fileName = prompt('Enter new file name:');
-            if (fileName && !files[fileName]) {
-                files[fileName] = '';
-                const newFileItem = document.createElement('div');
-                newFileItem.classList.add('file-item');
-                newFileItem.dataset.file = fileName;
-                newFileItem.textContent = fileName;
-                newFileItem.addEventListener('click', (e) => {
-                    document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-                    newFileItem.classList.add('active');
-                    activeFile = newFileItem.dataset.file;
-                    fileContent.value = files[activeFile];
-                });
-                document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
-            }
-        }); 
     </script>
 </body>
 </html>
