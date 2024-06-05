@@ -80,6 +80,12 @@
         .folder .folder-item {
             margin-left: 5px;
         }
+        .folder.expanded > .folder-content {
+            display: block;
+        }
+        .folder-content {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -217,7 +223,7 @@
                 const newFolder = document.createElement('div');
                 newFolder.classList.add('folder');
                 newFolder.dataset.folder = folderName;
-                newFolder.innerHTML = `<div class="folder-item" draggable="true">${folderName}</div>`;
+                newFolder.innerHTML = `<div class="folder-item" draggable="true">${folderName}</div><div class="folder-content"></div>`;
                 enableDragAndDrop(newFolder.querySelector('.folder-item'));
                 document.querySelector('#file-tree').insertBefore(newFolder, document.querySelector('.add-file'));
                 addFolderEventListeners(newFolder);
@@ -246,7 +252,7 @@
                         item.textContent = itemName;
                         item.parentElement.style.marginLeft = '5px';
                     }
-                    folder.appendChild(item.parentElement || item);
+                    folder.querySelector('.folder-content').appendChild(item.parentElement || item);
                     if (activeFile === data) {
                         activeFile = newFilePath;
                         fileContent.value = files[activeFile];
@@ -255,7 +261,6 @@
             });
         }
 
-        // Allow dragging files and folders out of folders
         document.querySelector('#file-tree').addEventListener('dragover', (e) => {
             e.preventDefault();
         });
