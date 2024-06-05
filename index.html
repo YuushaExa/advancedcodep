@@ -87,6 +87,7 @@
         <div id="file-tree">
             <div class="file-item" data-file="index.html" draggable="true">index.html</div>
             <div class="file-item" data-file="style.css" draggable="true">style.css</div>
+            <div class="file-item" data-file="script.js" draggable="true">script.js</div>
             <div class="add-file">Add New File</div>
             <div class="add-folder">Add New Folder</div>
         </div>
@@ -213,7 +214,7 @@
             if (folderName) {
                 const newFolder = document.createElement('div');
                 newFolder.classList.add('folder');
-                newFolder.innerHTML = `<div class="folder-item" draggable="true">${folderName}</div>`;
+                newFolder.innerHTML = `<div class="folder-item">${folderName}</div>`;
                 newFolder.querySelector('.folder-item').addEventListener('click', () => {
                     newFolder.classList.toggle('expanded');
                 });
@@ -238,48 +239,29 @@
                         fileContent.value = files[activeFile];
                     }
                 });
-                newFolder.querySelector('.folder-item').addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', folderName);
-                });
             }
         });
 
-        // Allow dragging folders
-        document.querySelectorAll('.folder-item').forEach(folderItem => {
-            folderItem.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', folderItem.textContent);
-            });
-        });
-
-        // Allow dragging files out of folders and folders into folders
+        // Allow dragging files out of folders
         document.querySelector('#file-tree').addEventListener('dragover', (e) => {
             e.preventDefault();
         });
         document.querySelector('#file-tree').addEventListener('drop', (e) => {
             e.preventDefault();
-            const data = e.dataTransfer.getData('text/plain');
-            const folderItem = document.querySelector(`.folder-item[draggable="true"]:contains("${data}")`);
-            const fileItem = document.querySelector(`.file-item[data-file="${data}"]`);
-            const isFile = fileItem !== null;
-            const isFolder = folderItem !== null;
-            const fileName = data.split('/').pop();
-
-            if (isFile && data.includes('/')) {
-                files[fileName] = files[data];
-                delete files[data];
+            const file = e.dataTransfer.getData('text/plain');
+            const fileName = file.split('/').pop();
+            if (file.includes('/')) {
+                files[fileName] = files[file];
+                delete files[file];
+                const fileItem = document.querySelector(`[data-file="${file}"]`);
                 fileItem.dataset.file = fileName;
                 fileItem.textContent = fileName;
                 fileItem.style.marginLeft = '0';
                 document.querySelector('#file-tree').insertBefore(fileItem, document.querySelector('.add-file'));
-                if (activeFile === data) {
+                if (activeFile === file) {
                     activeFile = fileName;
                     fileContent.value = files[activeFile];
                 }
-            } else if (isFolder) {
-                const folder = document.createElement('div');
-                folder.classList.add('folder');
-                folder.innerHTML = `<div class="folder-item" draggable="true">${data}</div>`;
-                document.querySelector('#file-tree').insertBefore(folder, document.querySelector('.add-file'));
             }
         });
 
@@ -290,29 +272,20 @@
             });
             folder.addEventListener('drop', (e) => {
                 e.preventDefault();
-                const data = e.dataTransfer.getData('text/plain');
+                const file = e.dataTransfer.getData('text/plain');
                 const folderName = folder.querySelector('.folder-item').textContent;
-                const fileItem = document.querySelector(`.file-item[data-file="${data}"]`);
-                const isFile = fileItem !== null;
-                const fileName = data.split('/').pop();
+                const fileName = file.split('/').pop();
                 const newFilePath = `${folderName}/${fileName}`;
-
-                if (isFile) {
-                    files[newFilePath] = files[data];
-                    delete files[data];
-                    fileItem.dataset.file = newFilePath;
-                    fileItem.textContent = fileName;
-                    fileItem.style.marginLeft = '5px';
-                    folder.appendChild(fileItem);
-                    if (activeFile === data) {
-                        activeFile = newFilePath;
-                        fileContent.value = files[activeFile];
-                    }
-                } else {
-                    const newFolder = document.createElement('div');
-                    newFolder.classList.add('folder');
-                    newFolder.innerHTML = `<div class="folder-item" draggable="true">${data}</div>`;
-                    folder.appendChild(newFolder);
+                files[newFilePath] = files[file];
+                delete files[file];
+                const fileItem = document.querySelector(`[data-file="${file}"]`);
+                fileItem.dataset.file = newFilePath;
+                fileItem.textContent = fileName;
+                fileItem.style.marginLeft = '5px';
+                folder.appendChild(fileItem);
+                if (activeFile === file) {
+                    activeFile = newFilePath;
+                    fileContent.value = files[activeFile];
                 }
             });
         });
