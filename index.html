@@ -49,13 +49,15 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
-        .file-item {
+        .file-item,
+        .folder-item {
             cursor: pointer;
             padding: 5px;
             margin: 2px 0;
             border-radius: 3px;
         }
-        .file-item:hover {
+        .file-item:hover,
+        .folder-item:hover {
             background-color: #eee;
         }
         .file-item.active {
@@ -210,8 +212,8 @@
             if (folderName) {
                 const newFolder = document.createElement('div');
                 newFolder.classList.add('folder');
-                newFolder.innerHTML = `<div class="file-item">${folderName}</div>`;
-                newFolder.querySelector('.file-item').addEventListener('click', () => {
+                newFolder.innerHTML = `<div class="folder-item">${folderName}</div>`;
+                newFolder.querySelector('.folder-item').addEventListener('click', () => {
                     newFolder.classList.toggle('expanded');
                 });
                 document.querySelector('#file-tree').insertBefore(newFolder, document.querySelector('.add-file'));
@@ -259,6 +261,31 @@
                     fileContent.value = files[activeFile];
                 }
             }
+        });
+
+        // Initial folder event listeners
+        document.querySelectorAll('.folder').forEach(folder => {
+            folder.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            folder.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.getData('text/plain');
+                const folderName = folder.querySelector('.folder-item').textContent;
+                const fileName = file.split('/').pop();
+                const newFilePath = `${folderName}/${fileName}`;
+                files[newFilePath] = files[file];
+                delete files[file];
+                const fileItem = document.querySelector(`[data-file="${file}"]`);
+                fileItem.dataset.file = newFilePath;
+                fileItem.textContent = fileName;
+                fileItem.style.marginLeft = '5px';
+                folder.appendChild(fileItem);
+                if (activeFile === file) {
+                    activeFile = newFilePath;
+                    fileContent.value = files[activeFile];
+                }
+            });
         });
     </script>
 </body>
