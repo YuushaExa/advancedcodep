@@ -238,6 +238,28 @@
             }
         });
 
+        // Allow dragging files out of folders
+        document.querySelector('#file-tree').addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+        document.querySelector('#file-tree').addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.getData('text/plain');
+            const fileName = file.split('/').pop();
+            if (file.includes('/')) {
+                files[fileName] = files[file];
+                delete files[file];
+                const fileItem = document.querySelector(`[data-file="${file}"]`);
+                fileItem.dataset.file = fileName;
+                fileItem.textContent = fileName;
+                fileItem.style.marginLeft = '0';
+                document.querySelector('#file-tree').insertBefore(fileItem, document.querySelector('.add-file'));
+                if (activeFile === file) {
+                    activeFile = fileName;
+                    fileContent.value = files[activeFile];
+                }
+            }
+        });
     </script>
 </body>
 </html>
