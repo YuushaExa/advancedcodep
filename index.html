@@ -76,8 +76,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/markdown/markdown.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/html-hint.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script type="text/javascript" src="/site.com/js/libs/codemirror/mode/xml/xml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.12/marked.min.js"></script>
 </head>
 <body>
     <h1>Code Sandbox</h1>
@@ -107,9 +106,8 @@
 
         // Initialize CodeMirror
         const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            mode: 'htmlmixed',
             lineNumbers: true,
-               mode : "xml",
-    htmlMode: true,
             extraKeys: {"Ctrl-Space": "autocomplete"},
             theme: 'monokai'
         });
@@ -120,7 +118,7 @@
             let isMarkdown = url.endsWith('.md');
 
             if (isMarkdown) {
-                content = marked(content); // Convert Markdown to HTML
+                content = marked.parse(content); // Convert Markdown to HTML using marked.parse()
             } else {
                 // Create a temporary element to parse the HTML
                 let tempDiv = document.createElement('div');
