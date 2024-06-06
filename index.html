@@ -49,13 +49,13 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
-        .file-item, .folder-item {
+        .file-item {
             cursor: pointer;
             padding: 5px;
             margin: 2px 0;
             border-radius: 3px;
         }
-        .file-item:hover, .folder-item:hover {
+        .file-item:hover {
             background-color: #eee;
         }
         .file-item.active {
@@ -70,16 +70,17 @@
             color: white;
             border-radius: 3px;
         }
-        .folder-contents {
-            margin-left: 20px;
-        }
     </style>
 </head>
 <body>
     <h1>Code Sandbox</h1>
     <div id="container">
-        <div id="file-tree"></div>
-                    <div class="add-file">Add New File</div>
+        <div id="file-tree">
+            <div class="file-item" data-file="index.html">index.html</div>
+            <div class="file-item" data-file="style.css">style.css</div>
+            <div class="file-item" data-file="script.js">script.js</div>
+            <div class="add-file">Add New File</div>
+        </div>
         <div id="editor">
             <textarea id="file-content" placeholder="File content"></textarea>
         </div>
@@ -89,48 +90,56 @@
     <script>
         let files = {
             'index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body><!-- HTML_PLACEHOLDER --><script type="module" src="script.js"></\script></body></html>',
-            'style.css': ''
+            'style.css': '',
+            'script.js': ''
         };
 
         let activeFile = 'index.html';
         const fileContent = document.querySelector('#file-content');
         const result = document.querySelector('#result');
-        const fileTree = document.querySelector('#file-tree');
-        
+        // Load initial content
         fileContent.value = files[activeFile];
 
-        function updateIframe(url = 'index.html') {
-            let htmlContent = files[url];
+        // Function to update the iframe
+         function updateIframe(url = 'index.html') {
+        let htmlContent = files[url];
 
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
+        // Create a temporary element to parse the HTML
+        let tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
 
-            tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-                let href = link.getAttribute('href');
-                if (files[href]) {
-                    let style = document.createElement('style');
-                    style.textContent = files[href];
-                    link.replaceWith(style);
-                }
-            });
+        // Inject CSS content
+        tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+            let href = link.getAttribute('href');
+            if (files[href]) {
+                let style = document.createElement('style');
+                style.textContent = files[href];
+                link.replaceWith(style);
+            }
+        });
 
-            tempDiv.querySelectorAll('script[src]').forEach(script => {
-                let src = script.getAttribute('src');
-                if (files[src]) {
-                    let inlineScript = document.createElement('script');
-                    inlineScript.textContent = files[src];
-                    script.replaceWith(inlineScript);
-                }
-            });
+        // Inject JS content
+        tempDiv.querySelectorAll('script[src]').forEach(script => {
+            let src = script.getAttribute('src');
+            if (files[src]) {
+                let inlineScript = document.createElement('script');
+                inlineScript.textContent = files[src];
+                script.replaceWith(inlineScript);
+            }
+        });
 
-            let page = tempDiv.innerHTML;
+        // Create the HTML page
+        let page = tempDiv.innerHTML;
 
-            let iframeDoc = result.contentDocument || result.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write(page);
-            iframeDoc.close();
-            interceptLinks(iframeDoc);
-        }
+        // Seamlessly update iframe content
+        let iframeDoc = result.contentDocument || result.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(page);
+        iframeDoc.close();
+        interceptLinks(iframeDoc);
+    }
+
+        // Intercept link clicks in the iframe
 
         function interceptLinks(doc) {
             doc.querySelectorAll('a').forEach(link => {
@@ -143,69 +152,40 @@
                 });
             });
         }
-
+        // Update iframe initially
         updateIframe();
-
+        // Handle input events
         fileContent.addEventListener('input', () => {
             files[activeFile] = fileContent.value;
             updateIframe(activeFile);
         });
 
-        function createFileTree(files) {
-            const root = document.createElement('div');
-            
-            function addNode(pathParts, parentNode) {
-                if (pathParts.length === 0) return;
-
-                let part = pathParts.shift();
-                let existingNode = Array.from(parentNode.children).find(child => child.dataset.name === part);
-
-                if (!existingNode) {
-                    existingNode = document.createElement(pathParts.length ? 'div' : 'div');
-                    existingNode.classList.add(pathParts.length ? 'folder-item' : 'file-item');
-                    existingNode.dataset.name = part;
-                    existingNode.textContent = part;
-                    existingNode.style.marginLeft = `${10 * (pathParts.length + 1)}px`;
-
-                    if (pathParts.length) {
-                        const folderContents = document.createElement('div');
-                        folderContents.classList.add('folder-contents');
-                        existingNode.appendChild(folderContents);
-                        existingNode.addEventListener('click', () => {
-                            folderContents.classList.toggle('hidden');
-                        });
-                    } else {
-                        existingNode.addEventListener('click', () => {
-                            document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-                            existingNode.classList.add('active');
-                            activeFile = pathParts.join('/');
-                            fileContent.value = files[activeFile];
-                        });
-                    }
-
-                    parentNode.appendChild(existingNode);
-                }
-
-                if (pathParts.length) {
-                    addNode(pathParts, existingNode.querySelector('.folder-contents'));
-                }
-            }
-
-            Object.keys(files).forEach(filePath => {
-                addNode(filePath.split('/'), root);
+        // Handle file selection
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                activeFile = item.dataset.file;
+                fileContent.value = files[activeFile];
             });
+        });
 
-            return root;
-        }
-
-        fileTree.appendChild(createFileTree(files));
-
+        // Handle new file creation
         document.querySelector('.add-file').addEventListener('click', () => {
             const fileName = prompt('Enter new file name:');
             if (fileName && !files[fileName]) {
                 files[fileName] = '';
-                fileTree.innerHTML = '';
-                fileTree.appendChild(createFileTree(files));
+                const newFileItem = document.createElement('div');
+                newFileItem.classList.add('file-item');
+                newFileItem.dataset.file = fileName;
+                newFileItem.textContent = fileName;
+                newFileItem.addEventListener('click', (e) => {
+                    document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                    newFileItem.classList.add('active');
+                    activeFile = newFileItem.dataset.file;
+                    fileContent.value = files[activeFile];
+                });
+                document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
         });
     </script>
