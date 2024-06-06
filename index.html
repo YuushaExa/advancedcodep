@@ -88,7 +88,9 @@
             <div class="file-item" data-file="script.js">script.js</div>
             <div class="add-file">Add New File</div>
         </div>
-            <div id="code-editor"></div>
+        <div id="editor">
+            <textarea id="code-editor"></textarea>
+        </div>
     </div>
     <iframe id="result"></iframe>
 
@@ -104,8 +106,7 @@
         const result = document.querySelector('#result');
 
         // Initialize CodeMirror
-        const editor = CodeMirror(document.getElementById('code-editor'), {
-            value: files[activeFile],
+        const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
             mode: 'htmlmixed',
             lineNumbers: true,
             extraKeys: {"Ctrl-Space": "autocomplete"},
@@ -203,6 +204,9 @@
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
         });
+
+        // Set initial content for the editor
+        editor.setValue(files[activeFile]);
     </script>
 </body>
 
