@@ -76,6 +76,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/markdown/markdown.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/html-hint.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <h1>Code Sandbox</h1>
@@ -113,39 +114,43 @@
 
         // Function to update the iframe
         function updateIframe(url = 'index.html') {
-            let htmlContent = files[url];
+            let content = files[url];
+            let isMarkdown = url.endsWith('.md');
 
-            // Create a temporary element to parse the HTML
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
+            if (isMarkdown) {
+                content = marked(content); // Convert Markdown to HTML
+            } else {
+                // Create a temporary element to parse the HTML
+                let tempDiv = document.createElement('div');
+                tempDiv.innerHTML = content;
 
-            // Inject CSS content
-            tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-                let href = link.getAttribute('href');
-                if (files[href]) {
-                    let style = document.createElement('style');
-                    style.textContent = files[href];
-                    link.replaceWith(style);
-                }
-            });
+                // Inject CSS content
+                tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                    let href = link.getAttribute('href');
+                    if (files[href]) {
+                        let style = document.createElement('style');
+                        style.textContent = files[href];
+                        link.replaceWith(style);
+                    }
+                });
 
-            // Inject JS content
-            tempDiv.querySelectorAll('script[src]').forEach(script => {
-                let src = script.getAttribute('src');
-                if (files[src]) {
-                    let inlineScript = document.createElement('script');
-                    inlineScript.textContent = files[src];
-                    script.replaceWith(inlineScript);
-                }
-            });
+                // Inject JS content
+                tempDiv.querySelectorAll('script[src]').forEach(script => {
+                    let src = script.getAttribute('src');
+                    if (files[src]) {
+                        let inlineScript = document.createElement('script');
+                        inlineScript.textContent = files[src];
+                        script.replaceWith(inlineScript);
+                    }
+                });
 
-            // Create the HTML page
-            let page = tempDiv.innerHTML;
+                content = tempDiv.innerHTML;
+            }
 
             // Seamlessly update iframe content
             let iframeDoc = result.contentDocument || result.contentWindow.document;
             iframeDoc.open();
-            iframeDoc.write(page);
+            iframeDoc.write(content);
             iframeDoc.close();
             interceptLinks(iframeDoc);
         }
