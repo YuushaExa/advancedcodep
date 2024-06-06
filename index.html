@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <title>Code Sandbox</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://codemirror.net/5/theme/monokai.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/codemirror.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/theme/monokai.css">
     <style>
         body {
             display: flex;
@@ -33,7 +34,7 @@
             padding: 10px;
             box-sizing: border-box;
         }
-        .cm-editor {
+        .CodeMirror {
             height: 300px;
             margin-bottom: 20px;
             font-family: monospace;
@@ -68,13 +69,27 @@
             border-radius: 3px;
         }
     </style>
-    <script type="module">
-        import {EditorState, EditorView, basicSetup} from "https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.19.1/dist/index.min.js";
-        import {html} from "https://cdn.jsdelivr.net/npm/@codemirror/lang-html@0.19.1/dist/index.min.js";
-        import {markdown} from "https://cdn.jsdelivr.net/npm/@codemirror/lang-markdown@0.19.1/dist/index.min.js";
-        import {oneDark} from "https://cdn.jsdelivr.net/npm/@codemirror/theme-one-dark@0.19.1/dist/index.min.js";
-        import {marked} from "https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.12/marked.min.js";
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/codemirror.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/javascript/javascript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/xml/xml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/css/css.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/htmlmixed/htmlmixed.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/markdown/markdown.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.12/marked.min.js"></script>
+</head>
+<body>
+    <h1>Code Sandbox</h1>
+    <div id="container">
+        <div id="file-tree">
+            <div class="file-item" data-file="index.html">index.html</div>
+            <div class="file-item" data-file="style.css">style.css</div>
+            <div class="file-item" data-file="script.js">script.js</div>
+            <div class="add-file">Add New File</div>
+        </div>
+        <div id="editor"></div>
+    </div>
+    <iframe id="result"></iframe>
+    <script>
         let files = {
             'index.html': '',
             'style.css': '',
@@ -84,31 +99,24 @@
         let activeFile = 'index.html';
         const result = document.querySelector('#result');
 
-        let editor = new EditorView({
-            state: EditorState.create({
-                doc: files[activeFile],
-                extensions: [
-                    basicSetup,
-                    html(),
-                    oneDark
-                ]
-            }),
-            parent: document.querySelector("#editor")
+        let editor = CodeMirror(document.querySelector("#editor"), {
+            value: files[activeFile],
+            mode: "htmlmixed",
+            theme: "monokai",
+            lineNumbers: true
         });
 
-        function updateEditorMode() {
-            const mode = activeFile.endsWith('.md') ? markdown() : html();
-            editor.dispatch({
-                effects: EditorState.reconfigure.of([basicSetup, mode, oneDark])
-            });
-        }
+        editor.on('change', () => {
+            files[activeFile] = editor.getValue();
+            updateIframe(activeFile);
+        });
 
         function updateIframe(url = 'index.html') {
             let content = files[url];
             let isMarkdown = url.endsWith('.md');
 
             if (isMarkdown) {
-                content = marked.parse(content);
+                content = marked(content);
             } else {
                 let tempDiv = document.createElement('div');
                 tempDiv.innerHTML = content;
@@ -155,33 +163,13 @@
 
         updateIframe();
 
-        editor.dispatch({
-            effects: EditorState.reconfigure.of([
-                basicSetup,
-                html(),
-                oneDark,
-                EditorView.updateListener.of((update) => {
-                    if (update.changes) {
-                        files[activeFile] = editor.state.doc.toString();
-                        updateIframe(activeFile);
-                    }
-                })
-            ])
-        });
-
         document.querySelectorAll('.file-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 activeFile = item.dataset.file;
-                editor.dispatch({
-                    changes: {from: 0, to: editor.state.doc.length, insert: files[activeFile]},
-                    effects: EditorState.reconfigure.of([
-                        basicSetup,
-                        activeFile.endsWith('.md') ? markdown() : html(),
-                        oneDark
-                    ])
-                });
+                editor.setValue(files[activeFile]);
+                editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
             });
         });
 
@@ -197,31 +185,12 @@
                     document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
                     newFileItem.classList.add('active');
                     activeFile = newFileItem.dataset.file;
-                    editor.dispatch({
-                        changes: {from: 0, to: editor.state.doc.length, insert: files[activeFile]},
-                        effects: EditorState.reconfigure.of([
-                            basicSetup,
-                            activeFile.endsWith('.md') ? markdown() : html(),
-                            oneDark
-                        ])
-                    });
+                    editor.setValue(files[activeFile]);
+                    editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
                 });
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
         });
     </script>
-</head>
-<body>
-    <h1>Code Sandbox</h1>
-    <div id="container">
-        <div id="file-tree">
-            <div class="file-item" data-file="index.html">index.html</div>
-            <div class="file-item" data-file="style.css">style.css</div>
-            <div class="file-item" data-file="script.js">script.js</div>
-            <div class="add-file">Add New File</div>
-        </div>
-        <div id="editor"></div>
-    </div>
-    <iframe id="result"></iframe>
 </body>
 </html>
