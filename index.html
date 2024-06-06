@@ -88,8 +88,7 @@
             <div class="file-item" data-file="script.js">script.js</div>
             <div class="add-file">Add New File</div>
         </div>
-        <div id="editor">
-            <div id="code-editor"></div>
+        <div id="code-editor">
         </div>
     </div>
     <iframe id="result"></iframe>
@@ -170,8 +169,8 @@
         updateIframe();
 
         // Handle input events
-        editor.on('change', () => {
-            files[activeFile] = editor.getValue();
+        code-editor.on('change', () => {
+            files[activeFile] = code-editor.getValue();
             updateIframe(activeFile);
         });
 
@@ -181,8 +180,8 @@
                 document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 activeFile = item.dataset.file;
-                editor.setValue(files[activeFile]);
-                editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
+                code-editor.setValue(files[activeFile]);
+                code-editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
             });
         });
 
@@ -199,8 +198,8 @@
                     document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
                     newFileItem.classList.add('active');
                     activeFile = newFileItem.dataset.file;
-                    editor.setValue(files[activeFile]);
-                    editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
+                    code-editor.setValue(files[activeFile]);
+                    code-editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
                 });
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
