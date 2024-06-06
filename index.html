@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Code Sandbox</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@codemirror/theme-one-dark@0.19.1/dist/index.css">
+    <link rel="stylesheet" href="https://codemirror.net/theme/one-dark.css">
     <style>
         body {
             display: flex;
@@ -68,13 +68,6 @@
             border-radius: 3px;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.19.1/dist/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@codemirror/lang-html@0.19.1/dist/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@codemirror/lang-markdown@0.19.1/dist/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@codemirror/view@0.19.1/dist/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@codemirror/state@0.19.1/dist/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@codemirror/theme-one-dark@0.19.1/dist/index.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.12/marked.min.js"></script>
 </head>
 <body>
     <h1>Code Sandbox</h1>
@@ -89,7 +82,14 @@
     </div>
     <iframe id="result"></iframe>
 
-    <script>
+    <script type="module">
+        import { EditorState } from "https://codemirror.net/6/state.js";
+        import { EditorView, basicSetup } from "https://codemirror.net/6/basic-setup/index.js";
+        import { html } from "https://codemirror.net/6/lang-html/index.js";
+        import { markdown } from "https://codemirror.net/6/lang-markdown/index.js";
+        import { oneDark } from "https://codemirror.net/6/theme-one-dark/index.js";
+        import { marked } from "https://cdn.jsdelivr.net/npm/marked@4.0.12/marked.min.js";
+
         let files = {
             'index.html': '',
             'style.css': '',
@@ -99,12 +99,6 @@
         let activeFile = 'index.html';
         const result = document.querySelector('#result');
 
-        // Initialize CodeMirror 6
-        const {EditorState, EditorView, basicSetup} = window["@codemirror/basic-setup"];
-        const {html} = window["@codemirror/lang-html"];
-        const {markdown} = window["@codemirror/lang-markdown"];
-        const {oneDark} = window["@codemirror/theme-one-dark"];
-        
         let editor = new EditorView({
             state: EditorState.create({
                 doc: files[activeFile],
