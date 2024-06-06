@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Code Sandbox</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://codemirror.net/theme/one-dark.css">
+    <link rel="stylesheet" href="https://codemirror.net/5/theme/monokai.css">
     <style>
         body {
             display: flex;
@@ -68,27 +68,12 @@
             border-radius: 3px;
         }
     </style>
-</head>
-<body>
-    <h1>Code Sandbox</h1>
-    <div id="container">
-        <div id="file-tree">
-            <div class="file-item" data-file="index.html">index.html</div>
-            <div class="file-item" data-file="style.css">style.css</div>
-            <div class="file-item" data-file="script.js">script.js</div>
-            <div class="add-file">Add New File</div>
-        </div>
-        <div id="editor"></div>
-    </div>
-    <iframe id="result"></iframe>
-
     <script type="module">
-        import { EditorState } from "https://codemirror.net/6/state.js";
-        import { EditorView, basicSetup } from "https://codemirror.net/6/basic-setup/index.js";
-        import { html } from "https://codemirror.net/6/lang-html/index.js";
-        import { markdown } from "https://codemirror.net/6/lang-markdown/index.js";
-        import { oneDark } from "https://codemirror.net/6/theme-one-dark/index.js";
-        import { marked } from "https://cdn.jsdelivr.net/npm/marked@4.0.12/marked.min.js";
+        import {EditorState, EditorView, basicSetup} from "https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.19.1/dist/index.min.js";
+        import {html} from "https://cdn.jsdelivr.net/npm/@codemirror/lang-html@0.19.1/dist/index.min.js";
+        import {markdown} from "https://cdn.jsdelivr.net/npm/@codemirror/lang-markdown@0.19.1/dist/index.min.js";
+        import {oneDark} from "https://cdn.jsdelivr.net/npm/@codemirror/theme-one-dark@0.19.1/dist/index.min.js";
+        import {marked} from "https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.12/marked.min.js";
 
         let files = {
             'index.html': '',
@@ -225,5 +210,18 @@
             }
         });
     </script>
+</head>
+<body>
+    <h1>Code Sandbox</h1>
+    <div id="container">
+        <div id="file-tree">
+            <div class="file-item" data-file="index.html">index.html</div>
+            <div class="file-item" data-file="style.css">style.css</div>
+            <div class="file-item" data-file="script.js">script.js</div>
+            <div class="add-file">Add New File</div>
+        </div>
+        <div id="editor"></div>
+    </div>
+    <iframe id="result"></iframe>
 </body>
 </html>
