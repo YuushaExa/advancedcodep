@@ -93,10 +93,10 @@
             'style.css': '',
             'script.js': ''
         };
+
         let activeFile = 'index.html';
         const fileContent = document.querySelector('#file-content');
         const result = document.querySelector('#result');
-
         // Load initial content
         fileContent.value = files[activeFile];
 
@@ -107,7 +107,6 @@
             // Create a temporary element to parse the HTML
             let tempDiv = document.createElement('div');
             tempDiv.innerHTML = htmlContent;
-
             // Inject CSS content
             tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
                 let href = link.getAttribute('href');
@@ -117,7 +116,6 @@
                     link.replaceWith(style);
                 }
             });
-
             // Inject JS content
             tempDiv.querySelectorAll('script[src]').forEach(script => {
                 let src = script.getAttribute('src');
@@ -138,6 +136,7 @@
         }
 
         // Intercept link clicks in the iframe
+
         function interceptLinks(doc) {
             doc.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', (event) => {
@@ -149,10 +148,8 @@
                 });
             });
         }
-
         // Update iframe initially
         updateIframe();
-
         // Handle input events
         fileContent.addEventListener('input', () => {
             files[activeFile] = fileContent.value;
