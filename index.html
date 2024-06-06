@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <title>Code Sandbox</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
     <style>
         body {
             display: flex;
@@ -32,12 +35,9 @@
             padding: 10px;
             box-sizing: border-box;
         }
-        textarea {
-            width: 100%;
+        .CodeMirror {
             height: 300px;
             margin-bottom: 20px;
-            padding: 10px;
-            box-sizing: border-box;
             font-family: monospace;
             border: 1px solid #ccc;
             background-color: #fff;
@@ -71,7 +71,13 @@
             border-radius: 3px;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/html-hint.min.js"></script>
 </head>
+
 <body>
     <h1>Code Sandbox</h1>
     <div id="container">
@@ -82,7 +88,7 @@
             <div class="add-file">Add New File</div>
         </div>
         <div id="editor">
-            <textarea id="file-content" placeholder="File content"></textarea>
+            <div id="code-editor"></div>
         </div>
     </div>
     <iframe id="result"></iframe>
@@ -95,52 +101,58 @@
         };
 
         let activeFile = 'index.html';
-        const fileContent = document.querySelector('#file-content');
+
         const result = document.querySelector('#result');
-        // Load initial content
-        fileContent.value = files[activeFile];
+
+        // Initialize CodeMirror
+        const editor = CodeMirror(document.getElementById('code-editor'), {
+            value: files[activeFile],
+            mode: 'htmlmixed',
+            lineNumbers: true,
+            extraKeys: {"Ctrl-Space": "autocomplete"},
+            theme: 'monokai'
+        });
 
         // Function to update the iframe
-         function updateIframe(url = 'index.html') {
-        let htmlContent = files[url];
+        function updateIframe(url = 'index.html') {
+            let htmlContent = files[url];
 
-        // Create a temporary element to parse the HTML
-        let tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlContent;
+            // Create a temporary element to parse the HTML
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
 
-        // Inject CSS content
-        tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-            let href = link.getAttribute('href');
-            if (files[href]) {
-                let style = document.createElement('style');
-                style.textContent = files[href];
-                link.replaceWith(style);
-            }
-        });
+            // Inject CSS content
+            tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                let href = link.getAttribute('href');
+                if (files[href]) {
+                    let style = document.createElement('style');
+                    style.textContent = files[href];
+                    link.replaceWith(style);
+                }
+            });
 
-        // Inject JS content
-        tempDiv.querySelectorAll('script[src]').forEach(script => {
-            let src = script.getAttribute('src');
-            if (files[src]) {
-                let inlineScript = document.createElement('script');
-                inlineScript.textContent = files[src];
-                script.replaceWith(inlineScript);
-            }
-        });
+            // Inject JS content
+            tempDiv.querySelectorAll('script[src]').forEach(script => {
+                let src = script.getAttribute('src');
+                if (files[src]) {
+                    let inlineScript = document.createElement('script');
+                    inlineScript.textContent = files[src];
+                    script.replaceWith(inlineScript);
+                }
+            });
 
-        // Create the HTML page
-        let page = tempDiv.innerHTML;
+            // Create the HTML page
+            let page = tempDiv.innerHTML;
 
-        // Seamlessly update iframe content
-        let iframeDoc = result.contentDocument || result.contentWindow.document;
-        iframeDoc.open();
-        iframeDoc.write(page);
-        iframeDoc.close();
-        interceptLinks(iframeDoc);
-    }
+            // Seamlessly update iframe content
+            let iframeDoc = result.contentDocument || result.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(page);
+            iframeDoc.close();
+            interceptLinks(iframeDoc);
+        }
 
         // Intercept link clicks in the iframe
-
         function interceptLinks(doc) {
             doc.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', (event) => {
@@ -152,11 +164,13 @@
                 });
             });
         }
+
         // Update iframe initially
         updateIframe();
+
         // Handle input events
-        fileContent.addEventListener('input', () => {
-            files[activeFile] = fileContent.value;
+        editor.on('change', () => {
+            files[activeFile] = editor.getValue();
             updateIframe(activeFile);
         });
 
@@ -166,7 +180,8 @@
                 document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 activeFile = item.dataset.file;
-                fileContent.value = files[activeFile];
+                editor.setValue(files[activeFile]);
+                editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
             });
         });
 
@@ -183,11 +198,13 @@
                     document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
                     newFileItem.classList.add('active');
                     activeFile = newFileItem.dataset.file;
-                    fileContent.value = files[activeFile];
+                    editor.setValue(files[activeFile]);
+                    editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
                 });
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
         });
     </script>
 </body>
+
 </html>
