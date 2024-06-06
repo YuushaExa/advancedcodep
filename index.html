@@ -70,6 +70,34 @@
             color: white;
             border-radius: 3px;
         }
+        #file-tree ul, #file-tree .nested {
+    list-style-type: none;
+    padding-left: 20px;
+}
+
+#file-tree .caret {
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+}
+
+#file-tree .caret::before {
+    content: "\25B6"; /* Triangle symbol */
+    color: black;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+#file-tree .caret-down::before {
+    transform: rotate(90deg); /* Rotate the triangle */
+}
+
+#file-tree .nested {
+    display: none;
+}
+
+#file-tree .active {
+    display: block;
+}
     </style>
 </head>
 <body>
@@ -188,6 +216,70 @@
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
         });
+
+        document.addEventListener("DOMContentLoaded", function() {
+    // Extract file paths from the HTML
+    const fileElements = document.querySelectorAll('#file-tree .file-item');
+    const filePaths = Array.from(fileElements).map(el => el.getAttribute('data-file'));
+
+    // Build the tree structure from file paths
+    function buildTree(paths) {
+        const tree = {};
+
+        paths.forEach(path => {
+            const parts = path.split('/');
+            let current = tree;
+
+            parts.forEach((part, index) => {
+                if (!current[part]) {
+                    current[part] = index === parts.length - 1 ? null : {};
+                }
+                current = current[part];
+            });
+        });
+
+        return tree;
+    }
+
+    // Render the tree structure as nested HTML
+    function renderTree(tree, parentElement) {
+        const ul = document.createElement('ul');
+
+        Object.keys(tree).forEach(key => {
+            const li = document.createElement('li');
+            if (tree[key] === null) {
+                li.textContent = key;
+            } else {
+                li.innerHTML = `<span class="caret">${key}</span>`;
+                const nestedUl = document.createElement('ul');
+                nestedUl.classList.add('nested');
+                renderTree(tree[key], nestedUl);
+                li.appendChild(nestedUl);
+            }
+            ul.appendChild(li);
+        });
+
+        parentElement.appendChild(ul);
+    }
+
+    // Add click events to caret elements
+    function addClickEvents() {
+        const toggler = document.getElementsByClassName("caret");
+        for (let i = 0; i < toggler.length; i++) {
+            toggler[i].addEventListener("click", function() {
+                this.parentElement.querySelector(".nested").classList.toggle("active");
+                this.classList.toggle("caret-down");
+            });
+        }
+    }
+
+    const tree = buildTree(filePaths);
+    const fileTreeContainer = document.getElementById('file-tree');
+    fileTreeContainer.innerHTML = ''; // Clear existing flat list
+    renderTree(tree, fileTreeContainer);
+    addClickEvents();
+});
+
     </script>
 </body>
 </html>
