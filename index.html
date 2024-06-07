@@ -19,7 +19,7 @@
         #container {
             display: flex;
             width: 100%;
-            max-width: 90%;
+            max-width: 1200px;
         }
         #file-tree {
             width: 25%;
@@ -41,15 +41,10 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
-        #iframe-container {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-        }
         iframe {
-            width: 45%;
+            width: 100%;
             height: 500px;
-            border: none;
+            border: 1px solid #ccc;
             background-color: #fff;
         }
         .file-item {
@@ -73,21 +68,6 @@
             color: white;
             border-radius: 3px;
         }
-        #editor {
-            flex-grow: 1;
-            padding: 10px;
-            box-sizing: border-box;
-            width: 90%;
-        }
-        #file-select-container {
-            margin: 10px 0;
-            width: 100%;
-            text-align: center;
-        }
-        #file-select {
-            padding: 5px;
-            font-size: 16px;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/codemirror.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/javascript/javascript.js"></script>
@@ -108,20 +88,9 @@
             <div class="file-item" data-file="script.js">script.js</div>
             <div class="add-file">Add New File</div>
         </div>
-        <div id="iframe-container">
-            <iframe id="result"></iframe>
-            <iframe id="indexResult"></iframe>
-        </div>
+        <div id="editor"></div>
     </div>
-    <div id="file-select-container">
-        <label for="file-select">Select file to display in second iframe:</label>
-        <select id="file-select">
-            <option value="index.html">index.html</option>
-            <option value="style.css">style.css</option>
-            <option value="script.js">script.js</option>
-        </select>
-    </div>
-    <div id="editor"></div>
+    <iframe id="result"></iframe>
     <script>
         let files = {
             'index.html': '',
@@ -131,8 +100,6 @@
 
         let activeFile = 'index.html';
         const result = document.querySelector('#result');
-        const indexResult = document.querySelector('#indexResult');
-        const fileSelect = document.querySelector('#file-select');
 
         let editor = CodeMirror(document.querySelector("#editor"), {
             value: files[activeFile],
@@ -146,13 +113,9 @@
         editor.on('change', () => {
             files[activeFile] = editor.getValue();
             updateIframe(activeFile);
-
-            if (activeFile === 'index.html') {
-                updateIndexIframe();
-            }
         });
 
-        function updateIframe(url) {
+        function updateIframe(url = 'index.html') {
             let content = files[url];
             let isMarkdown = url.endsWith('.md');
 
@@ -190,14 +153,6 @@
             interceptLinks(iframeDoc);
         }
 
-        function updateIndexIframe() {
-            let content = files['index.html'];
-            let iframeDoc = indexResult.contentDocument || indexResult.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write(content);
-            iframeDoc.close();
-        }
-
         function interceptLinks(doc) {
             doc.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', (event) => {
@@ -210,8 +165,7 @@
             });
         }
 
-        updateIframe('index.html');
-        updateIndexIframe();
+        updateIframe();
 
         document.querySelectorAll('.file-item').forEach(item => {
             item.addEventListener('click', (e) => {
@@ -239,54 +193,8 @@
                     editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
                 });
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
-                const newOption = document.createElement('option');
-                newOption.value = fileName;
-                newOption.textContent = fileName;
-                fileSelect.appendChild(newOption);
             }
         });
-
-        fileSelect.addEventListener('change', () => {
-            const selectedFile = fileSelect.value;
-            updateSelectedIframe(selectedFile);
-        });
-
-        function updateSelectedIframe(fileName) {
-            let content = files[fileName];
-            let isMarkdown = fileName.endsWith('.md');
-
-            if (isMarkdown) {
-                content = marked(content);
-            } else {
-                let tempDiv = document.createElement('div');
-                tempDiv.innerHTML = content;
-
-                tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-                    let href = link.getAttribute('href');
-                    if (files[href]) {
-                        let style = document.createElement('style');
-                        style.textContent = files[href];
-                        link.replaceWith(style);
-                    }
-                });
-
-                tempDiv.querySelectorAll('script[src]').forEach(script => {
-                    let src = script.getAttribute('src');
-                    if (files[src]) {
-                        let inlineScript = document.createElement('script');
-                        inlineScript.textContent = files[src];
-                        script.replaceWith(inlineScript);
-                    }
-                });
-
-                content = tempDiv.innerHTML;
-            }
-
-            let iframeDoc = indexResult.contentDocument || indexResult.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write(content);
-            iframeDoc.close();
-        }
     </script>
 </body>
 </html>
