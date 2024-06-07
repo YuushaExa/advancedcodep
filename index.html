@@ -75,6 +75,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/css/css.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/htmlmixed/htmlmixed.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/markdown/markdown.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closebrackets.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closetag.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.js"></script>
 </head>
 <body>
@@ -101,7 +103,9 @@
             value: files[activeFile],
             mode: "htmlmixed",
             theme: "monokai",
-            lineNumbers: true
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            autoCloseTags: true
         });
 
         editor.on('change', () => {  
