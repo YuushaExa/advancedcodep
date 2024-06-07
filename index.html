@@ -94,9 +94,9 @@
         <div id="editor"></div>
         <div id="block-builder">
             <h2>Block Builder</h2>
-            <div class="block-item" data-block="button" draggable="true">Button</div>
-            <div class="block-item" data-block="header" draggable="true">Header</div>
-            <div class="block-item" data-block="paragraph" draggable="true">Paragraph</div>
+            <div class="block-item" data-block="button">Button</div>
+            <div class="block-item" data-block="header">Header</div>
+            <div class="block-item" data-block="paragraph">Paragraph</div>
         </div>
     </div>
     <iframe id="result"></iframe>
@@ -159,7 +159,6 @@
             iframeDoc.open();
             iframeDoc.write(content);
             iframeDoc.close();
-            iframeDoc.body.setAttribute('contenteditable', 'true'); // Make iframe content editable
             interceptLinks(iframeDoc);
         }
 
@@ -207,58 +206,49 @@
         });
 
         document.querySelectorAll('.block-item').forEach(item => {
-            item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', item.dataset.block);
+            item.addEventListener('click', () => {
+                const blockType = item.dataset.block;
+                let html = '';
+                let css = '';
+
+                switch (blockType) {
+                    case 'button':
+                        html = '<button class="my-button">Click me</button>';
+                        css = `.my-button {
+                            background-color: #007bff;
+                            color: white;
+                            padding: 10px 20px;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                        }`;
+                        break;
+                    case 'header':
+                        html = '<h1 class="my-header">My Header</h1>';
+                        css = `.my-header {
+                            font-size: 2em;
+                            text-align: center;
+                            color: #333;
+                        }`;
+                        break;
+                    case 'paragraph':
+                        html = '<p class="my-paragraph">This is a paragraph.</p>';
+                        css = `.my-paragraph {
+                            font-size: 1em;
+                            color: #666;
+                        }`;
+                        break;
+                }
+
+                files['index.html'] += '\n' + html;
+                files['style.css'] += '\n' + css;
+                if (activeFile === 'index.html') {
+                    editor.setValue(files['index.html']);
+                } else if (activeFile === 'style.css') {
+                    editor.setValue(files['style.css']);
+                }
+                updateIframe('index.html');
             });
-        });
-
-        result.addEventListener('dragover', (e) => {
-            e.preventDefault();
-        });
-
-        result.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const blockType = e.dataTransfer.getData('text/plain');
-            let html = '';
-            let css = '';
-
-            switch (blockType) {
-                case 'button':
-                    html = '<button class="my-button">Click me</button>';
-                    css = `.my-button {
-                        background-color: #007bff;
-                        color: white;
-                        padding: 10px 20px;
-                        border: none;
-                        border-radius: 5px;
-                        cursor: pointer;
-                    }`;
-                    break;
-                case 'header':
-                    html = '<h1 class="my-header">My Header</h1>';
-                    css = `.my-header {
-                        font-size: 2em;
-                        text-align: center;
-                        color: #333;
-                    }`;
-                    break;
-                case 'paragraph':
-                    html = '<p class="my-paragraph">This is a paragraph.</p>';
-                    css = `.my-paragraph {
-                        font-size: 1em;
-                        color: #666;
-                    }`;
-                    break;
-            }
-
-            files['index.html'] += '\n' + html;
-            files['style.css'] += '\n' + css;
-            if (activeFile === 'index.html') {
-                editor.setValue(files['index.html']);
-            } else if (activeFile === 'style.css') {
-                editor.setValue(files['style.css']);
-            }
-            updateIframe('index.html');
         });
     </script>
 </body>
