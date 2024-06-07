@@ -17,9 +17,9 @@
             background-color: #f5f5f5;
         }
         #container {
-       display: flex;
-    width: 100%;
-    max-width: 90%;
+            display: flex;
+            width: 100%;
+            max-width: 90%;
         }
         #file-tree {
             width: 25%;
@@ -41,18 +41,17 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
+        #iframe-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
         iframe {
-    width: 50%;
-    height: 500px;
-    border: none;
-    background-color: #fff;
-}
-
-#iframe-container {
-    display: flex;
-    justify-content: space-around;
-    width: 100%;
-}
+            width: 45%;
+            height: 500px;
+            border: none;
+            background-color: #fff;
+        }
         .file-item {
             cursor: pointer;
             padding: 5px;
@@ -75,10 +74,19 @@
             border-radius: 3px;
         }
         #editor {
-    flex-grow: 1;
-    padding: 10px;
-    box-sizing: border-box;
-    width: 90%;
+            flex-grow: 1;
+            padding: 10px;
+            box-sizing: border-box;
+            width: 90%;
+        }
+        #file-select-container {
+            margin: 10px 0;
+            width: 100%;
+            text-align: center;
+        }
+        #file-select {
+            padding: 5px;
+            font-size: 16px;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/codemirror.js"></script>
@@ -100,129 +108,185 @@
             <div class="file-item" data-file="script.js">script.js</div>
             <div class="add-file">Add New File</div>
         </div>
-        <iframe id="result"></iframe>
-        <iframe id="indexResult"></iframe>
+        <div id="iframe-container">
+            <iframe id="result"></iframe>
+            <iframe id="indexResult"></iframe>
+        </div>
     </div>
-   <div id="editor"></div>
+    <div id="file-select-container">
+        <label for="file-select">Select file to display in second iframe:</label>
+        <select id="file-select">
+            <option value="index.html">index.html</option>
+            <option value="style.css">style.css</option>
+            <option value="script.js">script.js</option>
+        </select>
+    </div>
+    <div id="editor"></div>
     <script>
-    let files = {
-    'index.html': '',
-    'style.css': '',
-    'script.js': ''
-};
+        let files = {
+            'index.html': '',
+            'style.css': '',
+            'script.js': ''
+        };
 
-let activeFile = 'index.html';
-const result = document.querySelector('#result');
-const indexResult = document.querySelector('#indexResult');
+        let activeFile = 'index.html';
+        const result = document.querySelector('#result');
+        const indexResult = document.querySelector('#indexResult');
+        const fileSelect = document.querySelector('#file-select');
 
-let editor = CodeMirror(document.querySelector("#editor"), {
-    value: files[activeFile],
-    mode: "htmlmixed",
-    theme: "monokai",
-    lineNumbers: true,
-    autoCloseBrackets: true,
-    autoCloseTags: true
-});
+        let editor = CodeMirror(document.querySelector("#editor"), {
+            value: files[activeFile],
+            mode: "htmlmixed",
+            theme: "monokai",
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            autoCloseTags: true
+        });
 
-editor.on('change', () => {
-    files[activeFile] = editor.getValue();
-    updateIframe(activeFile);
+        editor.on('change', () => {
+            files[activeFile] = editor.getValue();
+            updateIframe(activeFile);
 
-    if (activeFile === 'index.html') {
+            if (activeFile === 'index.html') {
+                updateIndexIframe();
+            }
+        });
+
+        function updateIframe(url) {
+            let content = files[url];
+            let isMarkdown = url.endsWith('.md');
+
+            if (isMarkdown) {
+                content = marked(content);
+            } else {
+                let tempDiv = document.createElement('div');
+                tempDiv.innerHTML = content;
+
+                tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                    let href = link.getAttribute('href');
+                    if (files[href]) {
+                        let style = document.createElement('style');
+                        style.textContent = files[href];
+                        link.replaceWith(style);
+                    }
+                });
+
+                tempDiv.querySelectorAll('script[src]').forEach(script => {
+                    let src = script.getAttribute('src');
+                    if (files[src]) {
+                        let inlineScript = document.createElement('script');
+                        inlineScript.textContent = files[src];
+                        script.replaceWith(inlineScript);
+                    }
+                });
+
+                content = tempDiv.innerHTML;
+            }
+
+            let iframeDoc = result.contentDocument || result.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(content);
+            iframeDoc.close();
+            interceptLinks(iframeDoc);
+        }
+
+        function updateIndexIframe() {
+            let content = files['index.html'];
+            let iframeDoc = indexResult.contentDocument || indexResult.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(content);
+            iframeDoc.close();
+        }
+
+        function interceptLinks(doc) {
+            doc.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const href = link.getAttribute('href');
+                    if (files[href]) {
+                        updateIframe(href);
+                    }
+                });
+            });
+        }
+
+        updateIframe('index.html');
         updateIndexIframe();
-    }
-});
 
-function updateIframe(url = 'index.html') {
-    let content = files[url];
-    let isMarkdown = url.endsWith('.md');
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                activeFile = item.dataset.file;
+                editor.setValue(files[activeFile]);
+                editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
+            });
+        });
 
-    if (isMarkdown) {
-        content = marked(content);
-    } else {
-        let tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content;
-
-        tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-            let href = link.getAttribute('href');
-            if (files[href]) {
-                let style = document.createElement('style');
-                style.textContent = files[href];
-                link.replaceWith(style);
+        document.querySelector('.add-file').addEventListener('click', () => {
+            const fileName = prompt('Enter new file name:');
+            if (fileName && !files[fileName]) {
+                files[fileName] = '';
+                const newFileItem = document.createElement('div');
+                newFileItem.classList.add('file-item');
+                newFileItem.dataset.file = fileName;
+                newFileItem.textContent = fileName;
+                newFileItem.addEventListener('click', (e) => {
+                    document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+                    newFileItem.classList.add('active');
+                    activeFile = newFileItem.dataset.file;
+                    editor.setValue(files[activeFile]);
+                    editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
+                });
+                document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
+                const newOption = document.createElement('option');
+                newOption.value = fileName;
+                newOption.textContent = fileName;
+                fileSelect.appendChild(newOption);
             }
         });
 
-        tempDiv.querySelectorAll('script[src]').forEach(script => {
-            let src = script.getAttribute('src');
-            if (files[src]) {
-                let inlineScript = document.createElement('script');
-                inlineScript.textContent = files[src];
-                script.replaceWith(inlineScript);
+        fileSelect.addEventListener('change', () => {
+            const selectedFile = fileSelect.value;
+            updateSelectedIframe(selectedFile);
+        });
+
+        function updateSelectedIframe(fileName) {
+            let content = files[fileName];
+            let isMarkdown = fileName.endsWith('.md');
+
+            if (isMarkdown) {
+                content = marked(content);
+            } else {
+                let tempDiv = document.createElement('div');
+                tempDiv.innerHTML = content;
+
+                tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                    let href = link.getAttribute('href');
+                    if (files[href]) {
+                        let style = document.createElement('style');
+                        style.textContent = files[href];
+                        link.replaceWith(style);
+                    }
+                });
+
+                tempDiv.querySelectorAll('script[src]').forEach(script => {
+                    let src = script.getAttribute('src');
+                    if (files[src]) {
+                        let inlineScript = document.createElement('script');
+                        inlineScript.textContent = files[src];
+                        script.replaceWith(inlineScript);
+                    }
+                });
+
+                content = tempDiv.innerHTML;
             }
-        });
 
-        content = tempDiv.innerHTML;
-    }
-
-    let iframeDoc = result.contentDocument || result.contentWindow.document;
-    iframeDoc.open();
-    iframeDoc.write(content);
-    iframeDoc.close();
-    interceptLinks(iframeDoc);
-}
-
-function updateIndexIframe() {
-    let content = files['index.html'];
-    let iframeDoc = indexResult.contentDocument || indexResult.contentWindow.document;
-    iframeDoc.open();
-    iframeDoc.write(content);
-    iframeDoc.close();
-}
-
-function interceptLinks(doc) {
-    doc.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', (event) => {
-            event.preventDefault();
-            const href = link.getAttribute('href');
-            if (files[href]) {
-                updateIframe(href);
-            }
-        });
-    });
-}
-
-updateIframe();
-updateIndexIframe();
-
-document.querySelectorAll('.file-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-        document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        activeFile = item.dataset.file;
-        editor.setValue(files[activeFile]);
-        editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
-    });
-});
-
-document.querySelector('.add-file').addEventListener('click', () => {
-    const fileName = prompt('Enter new file name:');
-    if (fileName && !files[fileName]) {
-        files[fileName] = '';
-        const newFileItem = document.createElement('div');
-        newFileItem.classList.add('file-item');
-        newFileItem.dataset.file = fileName;
-        newFileItem.textContent = fileName;
-        newFileItem.addEventListener('click', (e) => {
-            document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-            newFileItem.classList.add('active');
-            activeFile = newFileItem.dataset.file;
-            editor.setValue(files[activeFile]);
-            editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
-        });
-        document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
-    }
-});
-
+            let iframeDoc = indexResult.contentDocument || indexResult.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(content);
+            iframeDoc.close();
+        }
     </script>
 </body>
 </html>
