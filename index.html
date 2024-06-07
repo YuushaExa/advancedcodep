@@ -75,7 +75,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/css/css.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/htmlmixed/htmlmixed.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/markdown/markdown.js"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closebrackets.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closebrackets.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closetag.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 </head>
@@ -112,6 +112,7 @@
             files[activeFile] = editor.getValue();
             updateIframe(activeFile);
         });
+
         function updateIframe(url = 'index.html') {
             let content = files[url];
             let isMarkdown = url.endsWith('.md');
@@ -143,7 +144,9 @@
             iframeDoc.write(content);
             iframeDoc.close();
             interceptLinks(iframeDoc);
+            makeIframeEditable(iframeDoc);
         }
+
         function interceptLinks(doc) {
             doc.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', (event) => {
@@ -155,7 +158,17 @@
                 });
             });
         }
+
+        function makeIframeEditable(doc) {
+            doc.body.contentEditable = true;
+            doc.body.addEventListener('input', () => {
+                files[activeFile] = doc.body.innerHTML;
+                editor.setValue(files[activeFile]);
+            });
+        }
+
         updateIframe();
+
         document.querySelectorAll('.file-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
@@ -163,8 +176,10 @@
                 activeFile = item.dataset.file;
                 editor.setValue(files[activeFile]);
                 editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
+                updateIframe(activeFile);
             });
         });
+
         document.querySelector('.add-file').addEventListener('click', () => {
             const fileName = prompt('Enter new file name:');
             if (fileName && !files[fileName]) {
@@ -179,6 +194,7 @@
                     activeFile = newFileItem.dataset.file;
                     editor.setValue(files[activeFile]);
                     editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
+                    updateIframe(activeFile);
                 });
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
