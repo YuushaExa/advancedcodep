@@ -101,9 +101,9 @@
     <iframe id="result"></iframe>
     <script>
         let files = {
-            'index.html': '',
-            'style.css': '',
-            'script.js': ''
+            'index.html': '<!DOCTYPE html><html><head><title>Code Sandbox</title></head><body><h1>Hello World</h1></body></html>',
+            'style.css': 'body { font-family: Arial, sans-serif; }',
+            'script.js': 'console.log("Hello, world!");'
         };
 
         let activeFile = 'index.html';
@@ -218,7 +218,7 @@
         }
 
         function initGrapesJS() {
-            const editor = grapesjs.init({
+            const grapesEditor = grapesjs.init({
                 container: '#grapesjs-editor',
                 fromElement: true,
                 height: '100vh',
@@ -227,9 +227,9 @@
                 panels: { defaults: [] },
             });
 
-            editor.setComponents(files['index.html']);
-            editor.on('component:update', () => {
-                files['index.html'] = editor.getHtml();
+            grapesEditor.setComponents(files['index.html']);
+            grapesEditor.on('component:update', () => {
+                files['index.html'] = grapesEditor.getHtml();
                 updateIframe('index.html');
             });
         }
