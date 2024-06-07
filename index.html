@@ -21,7 +21,7 @@
             width: 100%;
             max-width: 1200px;
         }
-        #file-tree {
+        #file-tree, #block-builder {
             width: 25%;
             max-width: 200px;
             background-color: #fff;
@@ -47,13 +47,13 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
-        .file-item {
+        .file-item, .block-item {
             cursor: pointer;
             padding: 5px;
             margin: 2px 0;
             border-radius: 3px;
         }
-        .file-item:hover {
+        .file-item:hover, .block-item:hover {
             background-color: #eee;
         }
         .file-item.active {
@@ -67,6 +67,9 @@
             background-color: #007bff;
             color: white;
             border-radius: 3px;
+        }
+        #block-builder {
+            margin-left: 10px;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/codemirror.js"></script>
@@ -89,6 +92,12 @@
             <div class="add-file">Add New File</div>
         </div>
         <div id="editor"></div>
+        <div id="block-builder">
+            <h2>Block Builder</h2>
+            <div class="block-item" data-block="button">Button</div>
+            <div class="block-item" data-block="header">Header</div>
+            <div class="block-item" data-block="paragraph">Paragraph</div>
+        </div>
     </div>
     <iframe id="result"></iframe>
     <script>
@@ -194,6 +203,52 @@
                 });
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
+        });
+
+        document.querySelectorAll('.block-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const blockType = item.dataset.block;
+                let html = '';
+                let css = '';
+
+                switch (blockType) {
+                    case 'button':
+                        html = '<button class="my-button">Click me</button>';
+                        css = `.my-button {
+                            background-color: #007bff;
+                            color: white;
+                            padding: 10px 20px;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                        }`;
+                        break;
+                    case 'header':
+                        html = '<h1 class="my-header">My Header</h1>';
+                        css = `.my-header {
+                            font-size: 2em;
+                            text-align: center;
+                            color: #333;
+                        }`;
+                        break;
+                    case 'paragraph':
+                        html = '<p class="my-paragraph">This is a paragraph.</p>';
+                        css = `.my-paragraph {
+                            font-size: 1em;
+                            color: #666;
+                        }`;
+                        break;
+                }
+
+                files['index.html'] += '\n' + html;
+                files['style.css'] += '\n' + css;
+                if (activeFile === 'index.html') {
+                    editor.setValue(files['index.html']);
+                } else if (activeFile === 'style.css') {
+                    editor.setValue(files['style.css']);
+                }
+                updateIframe('index.html');
+            });
         });
     </script>
 </body>
