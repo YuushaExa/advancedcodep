@@ -21,7 +21,7 @@
             width: 100%;
             max-width: 1200px;
         }
-        #file-tree, #block-builder {
+        #file-tree {
             width: 25%;
             max-width: 200px;
             background-color: #fff;
@@ -47,13 +47,13 @@
             border: 1px solid #ccc;
             background-color: #fff;
         }
-        .file-item, .block-item {
+        .file-item {
             cursor: pointer;
             padding: 5px;
             margin: 2px 0;
             border-radius: 3px;
         }
-        .file-item:hover, .block-item:hover {
+        .file-item:hover {
             background-color: #eee;
         }
         .file-item.active {
@@ -68,9 +68,6 @@
             color: white;
             border-radius: 3px;
         }
-        #block-builder {
-            margin-left: 10px;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/codemirror.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/javascript/javascript.js"></script>
@@ -78,9 +75,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/css/css.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/htmlmixed/htmlmixed.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/markdown/markdown.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closebrackets.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closetag.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.js"></script>
 </head>
 <body>
     <h1>Code Sandbox</h1>
@@ -92,12 +87,6 @@
             <div class="add-file">Add New File</div>
         </div>
         <div id="editor"></div>
-        <div id="block-builder">
-            <h2>Block Builder</h2>
-            <div class="block-item" data-block="button">Button</div>
-            <div class="block-item" data-block="header">Header</div>
-            <div class="block-item" data-block="paragraph">Paragraph</div>
-        </div>
     </div>
     <iframe id="result"></iframe>
     <script>
@@ -106,34 +95,27 @@
             'style.css': '',
             'script.js': ''
         };
-
         let activeFile = 'index.html';
         const result = document.querySelector('#result');
-
         let editor = CodeMirror(document.querySelector("#editor"), {
             value: files[activeFile],
             mode: "htmlmixed",
             theme: "monokai",
-            lineNumbers: true,
-            autoCloseBrackets: true,
-            autoCloseTags: true
+            lineNumbers: true
         });
 
-        editor.on('change', () => {
+        editor.on('change', () => {  
             files[activeFile] = editor.getValue();
             updateIframe(activeFile);
         });
-
         function updateIframe(url = 'index.html') {
             let content = files[url];
             let isMarkdown = url.endsWith('.md');
-
             if (isMarkdown) {
                 content = marked(content);
             } else {
                 let tempDiv = document.createElement('div');
                 tempDiv.innerHTML = content;
-
                 tempDiv.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
                     let href = link.getAttribute('href');
                     if (files[href]) {
@@ -142,7 +124,6 @@
                         link.replaceWith(style);
                     }
                 });
-
                 tempDiv.querySelectorAll('script[src]').forEach(script => {
                     let src = script.getAttribute('src');
                     if (files[src]) {
@@ -151,17 +132,14 @@
                         script.replaceWith(inlineScript);
                     }
                 });
-
                 content = tempDiv.innerHTML;
             }
-
             let iframeDoc = result.contentDocument || result.contentWindow.document;
             iframeDoc.open();
             iframeDoc.write(content);
             iframeDoc.close();
             interceptLinks(iframeDoc);
         }
-
         function interceptLinks(doc) {
             doc.querySelectorAll('a').forEach(link => {
                 link.addEventListener('click', (event) => {
@@ -173,9 +151,7 @@
                 });
             });
         }
-
         updateIframe();
-
         document.querySelectorAll('.file-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
@@ -185,7 +161,6 @@
                 editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
             });
         });
-
         document.querySelector('.add-file').addEventListener('click', () => {
             const fileName = prompt('Enter new file name:');
             if (fileName && !files[fileName]) {
@@ -203,52 +178,6 @@
                 });
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
-        });
-
-        document.querySelectorAll('.block-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const blockType = item.dataset.block;
-                let html = '';
-                let css = '';
-
-                switch (blockType) {
-                    case 'button':
-                        html = '<button class="my-button">Click me</button>';
-                        css = `.my-button {
-                            background-color: #007bff;
-                            color: white;
-                            padding: 10px 20px;
-                            border: none;
-                            border-radius: 5px;
-                            cursor: pointer;
-                        }`;
-                        break;
-                    case 'header':
-                        html = '<h1 class="my-header">My Header</h1>';
-                        css = `.my-header {
-                            font-size: 2em;
-                            text-align: center;
-                            color: #333;
-                        }`;
-                        break;
-                    case 'paragraph':
-                        html = '<p class="my-paragraph">This is a paragraph.</p>';
-                        css = `.my-paragraph {
-                            font-size: 1em;
-                            color: #666;
-                        }`;
-                        break;
-                }
-
-                files['index.html'] += '\n' + html;
-                files['style.css'] += '\n' + css;
-                if (activeFile === 'index.html') {
-                    editor.setValue(files['index.html']);
-                } else if (activeFile === 'style.css') {
-                    editor.setValue(files['style.css']);
-                }
-                updateIframe('index.html');
-            });
         });
     </script>
 </body>
