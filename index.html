@@ -116,7 +116,7 @@
             let content = files[url];
             let isMarkdown = url.endsWith('.md');
             if (isMarkdown) {
-                content = marked(content);
+                content = marked.parse(content);
             } else {
                 let tempDiv = document.createElement('div');
                 tempDiv.innerHTML = content;
