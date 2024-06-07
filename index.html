@@ -160,6 +160,7 @@
             iframeDoc.write(content);
             iframeDoc.close();
             interceptLinks(iframeDoc);
+            makeEditable(iframeDoc);
         }
 
         function interceptLinks(doc) {
@@ -171,6 +172,44 @@
                         updateIframe(href);
                     }
                 });
+            });
+        }
+
+        function makeEditable(doc) {
+            doc.body.contentEditable = true;
+
+            doc.querySelectorAll('*').forEach(element => {
+                element.style.outline = '1px solid transparent';
+                element.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    doc.querySelectorAll('*').forEach(el => el.style.outline = '1px solid transparent');
+                    element.style.outline = '1px solid #007bff';
+                });
+
+                element.addEventListener('input', () => {
+                    files['index.html'] = doc.body.innerHTML;
+                    if (activeFile === 'index.html') {
+                        editor.setValue(files['index.html']);
+                    }
+                });
+
+                element.addEventListener('mousedown', function(event) {
+                    let startX = event.pageX;
+                    let startY = event.pageY;
+                    let startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
+                    let startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
+                    let doDrag = function(e) {
+                        element.style.width = (startWidth + e.pageX - startX) + 'px';
+                        element.style.height = (startHeight + e.pageY - startY) + 'px';
+                    };
+                    let stopDrag = function() {
+                        document.documentElement.removeEventListener('mousemove', doDrag, false);
+                        document.documentElement.removeEventListener('mouseup', stopDrag, false);
+                    };
+                    document.documentElement.addEventListener('mousemove', doDrag, false);
+                    document.documentElement.addEventListener('mouseup', stopDrag, false);
+                    event.preventDefault();
+                }, false);
             });
         }
 
@@ -207,36 +246,21 @@
 
         document.querySelectorAll('.block-item').forEach(item => {
             item.addEventListener('click', () => {
-                const blockType = item.dataset.block;
                 let html = '';
                 let css = '';
 
-                switch (blockType) {
+                switch (item.dataset.block) {
                     case 'button':
-                        html = '<button class="my-button">Click me</button>';
-                        css = `.my-button {
-                            background-color: #007bff;
-                            color: white;
-                            padding: 10px 20px;
-                            border: none;
-                            border-radius: 5px;
-                            cursor: pointer;
-                        }`;
+                        html = '<button class="btn">Button</button>';
+                        css = '.btn { padding: 10px; border: none; background-color: #007bff; color: white; border-radius: 3px; cursor: pointer; }';
                         break;
                     case 'header':
-                        html = '<h1 class="my-header">My Header</h1>';
-                        css = `.my-header {
-                            font-size: 2em;
-                            text-align: center;
-                            color: #333;
-                        }`;
+                        html = '<h1 class="header">Header</h1>';
+                        css = '.header { font-size: 24px; }';
                         break;
                     case 'paragraph':
-                        html = '<p class="my-paragraph">This is a paragraph.</p>';
-                        css = `.my-paragraph {
-                            font-size: 1em;
-                            color: #666;
-                        }`;
+                        html = '<p class="paragraph">This is a paragraph.</p>';
+                        css = '.paragraph { font-size: 16px; line-height: 1.5; }';
                         break;
                 }
 
