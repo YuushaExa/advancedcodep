@@ -94,9 +94,9 @@
         <div id="editor"></div>
         <div id="block-builder">
             <h2>Block Builder</h2>
-            <div class="block-item" data-block="button">Button</div>
-            <div class="block-item" data-block="header">Header</div>
-            <div class="block-item" data-block="paragraph">Paragraph</div>
+            <div class="block-item" data-block="button" draggable="true">Button</div>
+            <div class="block-item" data-block="header" draggable="true">Header</div>
+            <div class="block-item" data-block="paragraph" draggable="true">Paragraph</div>
         </div>
     </div>
     <iframe id="result"></iframe>
@@ -159,8 +159,8 @@
             iframeDoc.open();
             iframeDoc.write(content);
             iframeDoc.close();
+            iframeDoc.body.setAttribute('contenteditable', 'true'); // Make iframe content editable
             interceptLinks(iframeDoc);
-            makeEditable(iframeDoc);
         }
 
         function interceptLinks(doc) {
@@ -172,44 +172,6 @@
                         updateIframe(href);
                     }
                 });
-            });
-        }
-
-        function makeEditable(doc) {
-            doc.body.contentEditable = true;
-
-            doc.querySelectorAll('*').forEach(element => {
-                element.style.outline = '1px solid transparent';
-                element.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    doc.querySelectorAll('*').forEach(el => el.style.outline = '1px solid transparent');
-                    element.style.outline = '1px solid #007bff';
-                });
-
-                element.addEventListener('input', () => {
-                    files['index.html'] = doc.body.innerHTML;
-                    if (activeFile === 'index.html') {
-                        editor.setValue(files['index.html']);
-                    }
-                });
-
-                element.addEventListener('mousedown', function(event) {
-                    let startX = event.pageX;
-                    let startY = event.pageY;
-                    let startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
-                    let startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
-                    let doDrag = function(e) {
-                        element.style.width = (startWidth + e.pageX - startX) + 'px';
-                        element.style.height = (startHeight + e.pageY - startY) + 'px';
-                    };
-                    let stopDrag = function() {
-                        document.documentElement.removeEventListener('mousemove', doDrag, false);
-                        document.documentElement.removeEventListener('mouseup', stopDrag, false);
-                    };
-                    document.documentElement.addEventListener('mousemove', doDrag, false);
-                    document.documentElement.addEventListener('mouseup', stopDrag, false);
-                    event.preventDefault();
-                }, false);
             });
         }
 
@@ -245,34 +207,58 @@
         });
 
         document.querySelectorAll('.block-item').forEach(item => {
-            item.addEventListener('click', () => {
-                let html = '';
-                let css = '';
-
-                switch (item.dataset.block) {
-                    case 'button':
-                        html = '<button class="btn">Button</button>';
-                        css = '.btn { padding: 10px; border: none; background-color: #007bff; color: white; border-radius: 3px; cursor: pointer; }';
-                        break;
-                    case 'header':
-                        html = '<h1 class="header">Header</h1>';
-                        css = '.header { font-size: 24px; }';
-                        break;
-                    case 'paragraph':
-                        html = '<p class="paragraph">This is a paragraph.</p>';
-                        css = '.paragraph { font-size: 16px; line-height: 1.5; }';
-                        break;
-                }
-
-                files['index.html'] += '\n' + html;
-                files['style.css'] += '\n' + css;
-                if (activeFile === 'index.html') {
-                    editor.setValue(files['index.html']);
-                } else if (activeFile === 'style.css') {
-                    editor.setValue(files['style.css']);
-                }
-                updateIframe('index.html');
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', item.dataset.block);
             });
+        });
+
+        result.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        result.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const blockType = e.dataTransfer.getData('text/plain');
+            let html = '';
+            let css = '';
+
+            switch (blockType) {
+                case 'button':
+                    html = '<button class="my-button">Click me</button>';
+                    css = `.my-button {
+                        background-color: #007bff;
+                        color: white;
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    }`;
+                    break;
+                case 'header':
+                    html = '<h1 class="my-header">My Header</h1>';
+                    css = `.my-header {
+                        font-size: 2em;
+                        text-align: center;
+                        color: #333;
+                    }`;
+                    break;
+                case 'paragraph':
+                    html = '<p class="my-paragraph">This is a paragraph.</p>';
+                    css = `.my-paragraph {
+                        font-size: 1em;
+                        color: #666;
+                    }`;
+                    break;
+            }
+
+            files['index.html'] += '\n' + html;
+            files['style.css'] += '\n' + css;
+            if (activeFile === 'index.html') {
+                editor.setValue(files['index.html']);
+            } else if (activeFile === 'style.css') {
+                editor.setValue(files['style.css']);
+            }
+            updateIframe('index.html');
         });
     </script>
 </body>
