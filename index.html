@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/codemirror.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/theme/monokai.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.16.27/css/grapes.min.css">
     <style>
         body {
             display: flex;
@@ -30,7 +29,7 @@
             padding: 10px;
             box-sizing: border-box;
         }
-        #editor, #grapesjs-editor {
+        #editor {
             flex-grow: 1;
             padding: 10px;
             box-sizing: border-box;
@@ -69,11 +68,6 @@
             color: white;
             border-radius: 3px;
         }
-        #grapesjs-editor {
-            display: none;
-            height: 100vh;
-            width: 100%;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/codemirror.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/mode/javascript/javascript.js"></script>
@@ -84,7 +78,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closebrackets.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/4.0.3/addon/edit/closetag.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/grapesjs/0.16.27/grapes.min.js"></script>
 </head>
 <body>
     <h1>Code Sandbox</h1>
@@ -96,14 +89,13 @@
             <div class="add-file">Add New File</div>
         </div>
         <div id="editor"></div>
-        <div id="grapesjs-editor"></div>
     </div>
     <iframe id="result"></iframe>
     <script>
         let files = {
-            'index.html': '<!DOCTYPE html><html><head><title>Code Sandbox</title></head><body><h1>Hello World</h1></body></html>',
-            'style.css': 'body { font-family: Arial, sans-serif; }',
-            'script.js': 'console.log("Hello, world!");'
+            'index.html': '',
+            'style.css': '',
+            'script.js': ''
         };
 
         let activeFile = 'index.html';
@@ -182,7 +174,6 @@
                 activeFile = item.dataset.file;
                 editor.setValue(files[activeFile]);
                 editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
-                toggleGrapesJSEditor();
             });
         });
 
@@ -200,39 +191,10 @@
                     activeFile = newFileItem.dataset.file;
                     editor.setValue(files[activeFile]);
                     editor.setOption('mode', activeFile.endsWith('.md') ? 'markdown' : 'htmlmixed');
-                    toggleGrapesJSEditor();
                 });
                 document.querySelector('#file-tree').insertBefore(newFileItem, document.querySelector('.add-file'));
             }
         });
-
-        function toggleGrapesJSEditor() {
-            if (activeFile === 'index.html') {
-                document.querySelector('#editor').style.display = 'none';
-                document.querySelector('#grapesjs-editor').style.display = 'block';
-                initGrapesJS();
-            } else {
-                document.querySelector('#editor').style.display = 'block';
-                document.querySelector('#grapesjs-editor').style.display = 'none';
-            }
-        }
-
-        function initGrapesJS() {
-            const grapesEditor = grapesjs.init({
-                container: '#grapesjs-editor',
-                fromElement: true,
-                height: '100vh',
-                storageManager: { autoload: 0 },
-                assetManager: { upload: false },
-                panels: { defaults: [] },
-            });
-
-            grapesEditor.setComponents(files['index.html']);
-            grapesEditor.on('component:update', () => {
-                files['index.html'] = grapesEditor.getHtml();
-                updateIframe('index.html');
-            });
-        }
     </script>
 </body>
 </html>
